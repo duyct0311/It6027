@@ -37,10 +37,10 @@ export const IocUpdateTab = () => {
     setMsg('');
     try {
       await apiClient.post('/ioc', form);
-      setMsg('Đã đẩy dữ liệu IOC / Chữ ký xuống Agent thành công!');
+      setMsg('IOC & Signature payload deployed down to agents successfully!');
       fetchIocs();
     } catch (err) {
-      setMsg('Lỗi khi đẩy IOC: ' + (err.response?.data?.detail || err.message));
+      setMsg('Failed to deploy IOC: ' + (err.response?.data?.detail || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -67,29 +67,29 @@ export const IocUpdateTab = () => {
         <div className="flex items-center gap-3">
           <Database size={28} className="text-accent" />
           <div>
-            <h2>Tính Năng 3: Cập Nhật & Đẩy IOC (Indicators of Compromise)</h2>
-            <p>Đẩy hash (MD5/SHA256), chữ ký YARA rule và danh sách IP/Domain độc hại xuống Agent để cập nhật khả năng nhận diện.</p>
+            <h2>Feature 3: IOC & Signature Distribution Engine</h2>
+            <p>Push file hashes (MD5/SHA256), YARA detection rules, and malicious IP/Domain blocklists down to connected agents.</p>
           </div>
         </div>
       </div>
 
       <div className="tab-grid">
-        {/* Form Tạo & Đẩy IOC */}
+        {/* Form Deploy IOC */}
         <div className="card-panel">
           <div className="panel-title flex items-center gap-2">
             <Send size={18} className="text-accent" />
-            <span>Đẩy IOC / Signature Mới Xuống Agent</span>
+            <span>Deploy New IOC / Signature to Agents</span>
           </div>
 
           {msg && (
-            <div className={`banner-alert ${msg.includes('Lỗi') ? 'alert-danger' : 'alert-success'}`}>
+            <div className={`banner-alert ${msg.includes('Failed') ? 'alert-danger' : 'alert-success'}`}>
               {msg}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="form-stack">
             <div className="form-group">
-              <label>Loại IOC (Type)</label>
+              <label>IOC Category (Type)</label>
               <select
                 value={form.ioc_type}
                 onChange={(e) => setForm({ ...form, ioc_type: e.target.value })}
@@ -98,13 +98,13 @@ export const IocUpdateTab = () => {
                 <option value="HASH_SHA256">File Hash (SHA256)</option>
                 <option value="HASH_MD5">File Hash (MD5)</option>
                 <option value="YARA_RULE">YARA Detection Rule</option>
-                <option value="MALICIOUS_IP">IP Độc Hại (Blacklist IP)</option>
-                <option value="MALICIOUS_DOMAIN">Domain Độc Hại (Blacklist Domain)</option>
+                <option value="MALICIOUS_IP">Malicious IP (IP Blacklist)</option>
+                <option value="MALICIOUS_DOMAIN">Malicious Domain (Domain Blacklist)</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Giá Trị Payload / Nội Dung Rule</label>
+              <label>Payload Value / Rule Specification Text</label>
               <textarea
                 value={form.value}
                 onChange={(e) => setForm({ ...form, value: e.target.value })}
@@ -115,7 +115,7 @@ export const IocUpdateTab = () => {
             </div>
 
             <div className="form-group">
-              <label>Mô Tả / Tên Quy Tắc</label>
+              <label>Rule Description / Threat Label</label>
               <input
                 type="text"
                 value={form.description}
@@ -125,7 +125,7 @@ export const IocUpdateTab = () => {
             </div>
 
             <div className="form-group">
-              <label>Mức Độ Nguy Hiểm</label>
+              <label>Assigned Threat Severity</label>
               <select
                 value={form.severity}
                 onChange={(e) => setForm({ ...form, severity: e.target.value })}
@@ -139,22 +139,22 @@ export const IocUpdateTab = () => {
             </div>
 
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Đang Đẩy...' : 'Đẩy IOC Xuống Agent Tức Thì'}
+              {submitting ? 'Deploying...' : 'Deploy IOC Payload Immediately'}
             </button>
           </form>
         </div>
 
-        {/* Danh Sách IOC Đã Đẩy */}
+        {/* IOC List */}
         <div className="card-panel">
           <div className="panel-title flex items-center gap-2">
             <ShieldCheck size={18} className="text-accent" />
-            <span>Kho IOC & Chữ Ký Đã Triển Khai ({iocs.length})</span>
+            <span>Deployed IOC Repository ({iocs.length})</span>
           </div>
 
           {loading ? (
-            <div className="table-loading">Đang tải kho IOC...</div>
+            <div className="table-loading">Loading IOC repository...</div>
           ) : iocs.length === 0 ? (
-            <div className="empty-state">Chưa có IOC nào được đẩy xuống Agent.</div>
+            <div className="empty-state">No IOC signatures deployed yet.</div>
           ) : (
             <div className="schedule-list">
               {iocs.map((item) => (

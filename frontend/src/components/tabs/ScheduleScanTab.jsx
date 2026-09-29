@@ -9,7 +9,7 @@ export const ScheduleScanTab = ({ agents }) => {
   const [msg, setMsg] = useState('');
 
   const [form, setForm] = useState({
-    name: 'Quét Định Kỳ Hệ Thống',
+    name: 'Periodic System Scan',
     cron_expression: '0 0 * * *',
     scan_scope: 'C:\\Program Files',
     target_agents: 'ALL',
@@ -38,17 +38,17 @@ export const ScheduleScanTab = ({ agents }) => {
     setMsg('');
     try {
       await apiClient.post('/schedules', form);
-      setMsg('Đã tạo lịch quét định kỳ thành công!');
+      setMsg('Scan schedule created successfully!');
       fetchSchedules();
       setForm({
-        name: 'Quét Định Kỳ Toàn Diện',
+        name: 'Weekly Full System Audit',
         cron_expression: '0 2 * * 0',
         scan_scope: 'C:\\Users',
         target_agents: 'ALL',
         scan_mode: 'DETECTED_ONLY'
       });
     } catch (err) {
-      setMsg('Lỗi khi tạo lịch quét: ' + (err.response?.data?.detail || err.message));
+      setMsg('Failed to create schedule: ' + (err.response?.data?.detail || err.message));
     } finally {
       setSubmitting(false);
     }
@@ -60,29 +60,29 @@ export const ScheduleScanTab = ({ agents }) => {
         <div className="flex items-center gap-3">
           <Calendar size={28} className="text-accent" />
           <div>
-            <h2>Tính Năng 2: Lập Lịch Quét Định Kỳ (Scan Scheduling)</h2>
-            <p>Tự động phát lệnh định kỳ ra lệnh cho Agent thực hiện quét hệ thống theo biểu thức Cron.</p>
+            <h2>Feature 2: Periodic Scan Scheduler</h2>
+            <p>Automatically dispatch periodic scan orders to target agents according to Cron expressions.</p>
           </div>
         </div>
       </div>
 
       <div className="tab-grid">
-        {/* Form Tạo Lịch Quét */}
+        {/* Form Create Schedule */}
         <div className="card-panel">
           <div className="panel-title flex items-center gap-2">
             <Plus size={18} className="text-accent" />
-            <span>Tạo Lịch Quét Mới</span>
+            <span>Create New Scan Schedule</span>
           </div>
 
           {msg && (
-            <div className={`banner-alert ${msg.includes('Lỗi') ? 'alert-danger' : 'alert-success'}`}>
+            <div className={`banner-alert ${msg.includes('Failed') ? 'alert-danger' : 'alert-success'}`}>
               {msg}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="form-stack">
             <div className="form-group">
-              <label>Tên Lịch Quét</label>
+              <label>Schedule Name</label>
               <input
                 type="text"
                 value={form.name}
@@ -93,7 +93,7 @@ export const ScheduleScanTab = ({ agents }) => {
             </div>
 
             <div className="form-group">
-              <label>Biểu Thức Cron (Ví dụ: 0 0 * * * = hàng ngày lúc 00:00)</label>
+              <label>Cron Expression (e.g. 0 0 * * * = Daily at Midnight)</label>
               <input
                 type="text"
                 value={form.cron_expression}
@@ -104,7 +104,7 @@ export const ScheduleScanTab = ({ agents }) => {
             </div>
 
             <div className="form-group">
-              <label>Phạm Vi Quét (Directory/Path)</label>
+              <label>Target Scan Scope (Directory / File Path)</label>
               <input
                 type="text"
                 value={form.scan_scope}
@@ -115,13 +115,13 @@ export const ScheduleScanTab = ({ agents }) => {
             </div>
 
             <div className="form-group">
-              <label>Agent Mục Tiêu</label>
+              <label>Target Agents</label>
               <select
                 value={form.target_agents}
                 onChange={(e) => setForm({ ...form, target_agents: e.target.value })}
                 className="form-select"
               >
-                <option value="ALL">Tất Cả Agent (ALL Connected Agents)</option>
+                <option value="ALL">All Agents (ALL Connected Endpoints)</option>
                 {agents.map((a) => (
                   <option key={a.agent_id} value={a.agent_id}>
                     {a.hostname} ({a.agent_id.substring(0, 8)})
@@ -131,35 +131,35 @@ export const ScheduleScanTab = ({ agents }) => {
             </div>
 
             <div className="form-group">
-              <label>Chế Độ Quét</label>
+              <label>Scan Action Mode</label>
               <select
                 value={form.scan_mode}
                 onChange={(e) => setForm({ ...form, scan_mode: e.target.value })}
                 className="form-select"
               >
-                <option value="DETECTED_ONLY">Nhận diện & Cảnh báo (Detection Only)</option>
-                <option value="QUARANTINE">Cách ly File vi phạm (Quarantine)</option>
-                <option value="DELETE">Xóa vĩnh viễn (Delete)</option>
+                <option value="DETECTED_ONLY">Detection Only (Alert Only)</option>
+                <option value="QUARANTINE">Quarantine (File Isolation)</option>
+                <option value="DELETE">Delete (Permanent Removal)</option>
               </select>
             </div>
 
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Đang Tạo Lịch...' : 'Lập Lịch Quét Ngay'}
+              {submitting ? 'Creating Schedule...' : 'Schedule Scan Now'}
             </button>
           </form>
         </div>
 
-        {/* Danh Sách Lịch Quét */}
+        {/* Schedule List */}
         <div className="card-panel">
           <div className="panel-title flex items-center gap-2">
             <Clock size={18} className="text-accent" />
-            <span>Danh Sách Lịch Quét Đã Cấu Hình ({schedules.length})</span>
+            <span>Active Configured Schedules ({schedules.length})</span>
           </div>
 
           {loading ? (
-            <div className="table-loading">Đang tải danh sách lịch...</div>
+            <div className="table-loading">Loading schedule records...</div>
           ) : schedules.length === 0 ? (
-            <div className="empty-state">Chưa có lịch quét nào được khởi tạo.</div>
+            <div className="empty-state">No active scan schedules configured yet.</div>
           ) : (
             <div className="schedule-list">
               {schedules.map((s) => (
@@ -167,14 +167,14 @@ export const ScheduleScanTab = ({ agents }) => {
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-main">{s.name}</span>
                     <span className="badge badge-low flex items-center gap-1">
-                      <CheckCircle2 size={12} /> Đang Hoạt Động
+                      <CheckCircle2 size={12} /> Active
                     </span>
                   </div>
                   <div className="schedule-details text-xs font-mono text-muted space-y-1">
                     <div>📅 Cron: <span className="text-accent">{s.cron_expression}</span></div>
-                    <div>📂 Phạm vi: {s.scan_scope}</div>
-                    <div>🖥️ Agent: {s.target_agents}</div>
-                    <div>🛡️ Chế độ: {s.scan_mode}</div>
+                    <div>📂 Scope: {s.scan_scope}</div>
+                    <div>🖥️ Target: {s.target_agents}</div>
+                    <div>🛡️ Mode: {s.scan_mode}</div>
                   </div>
                 </div>
               ))}

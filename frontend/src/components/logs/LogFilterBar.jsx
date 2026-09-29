@@ -25,7 +25,7 @@ export const LogFilterBar = ({ filters, onFilterChange, agents = [], onRefresh, 
       <div className="filter-header">
         <div className="flex items-center gap-2">
           <Filter size={18} className="text-accent" />
-          <span className="font-medium">Filter Scan Logs</span>
+          <span className="font-medium">Filter Scan Telemetry Logs</span>
         </div>
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
@@ -36,7 +36,7 @@ export const LogFilterBar = ({ filters, onFilterChange, agents = [], onRefresh, 
           )}
           <button onClick={onRefresh} className="btn-secondary text-sm" disabled={loading}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            Refresh Feed
           </button>
         </div>
       </div>

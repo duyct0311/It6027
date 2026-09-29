@@ -1,5 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, LogOut, Radio, User, FileText, Calendar, Database, Settings, ShieldAlert } from 'lucide-react';
+import {
+  Shield,
+  LogOut,
+  Radio,
+  User,
+  FileText,
+  Calendar,
+  Database,
+  Settings,
+  ShieldAlert,
+  ChevronRight
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useScanLogs } from '../hooks/useScanLogs';
 import { useWebSocket } from '../hooks/useWebSocket';
@@ -53,113 +64,141 @@ export const DashboardPage = () => {
   const { isConnected } = useWebSocket(handleWebSocketMessage);
 
   return (
-    <div className="dashboard-layout">
-      {/* Top Navbar */}
-      <header className="dashboard-header">
-        <div className="header-brand">
+    <div className="app-container">
+      {/* Vertical Left Sidebar Navigation */}
+      <aside className="left-sidebar">
+        <div className="sidebar-brand">
           <div className="shield-logo">
-            <Shield size={24} />
+            <Shield size={26} />
           </div>
-          <div>
-            <h1 className="header-title">Malware Scan Agent Manager</h1>
-            <span className="header-subtitle">Hệ Thống Quản Lý Agent Quét Mã Độc Tập Trung</span>
+          <div className="brand-text">
+            <h1 className="brand-name">Malware Manager</h1>
+            <span className="brand-tag">Central Server Hub</span>
           </div>
         </div>
 
-        <div className="header-right">
-          {/* WebSocket Status Indicator */}
-          <div className={`ws-badge ${isConnected ? 'ws-connected' : 'ws-disconnected'}`}>
-            <Radio size={14} className={isConnected ? 'animate-pulse' : ''} />
-            <span>{isConnected ? 'LIVE FEED ACTIVE' : 'DISCONNECTED'}</span>
+        <nav className="sidebar-nav">
+          <div className="nav-section-title">MAIN FEATURES</div>
+
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`nav-item ${activeTab === 'logs' ? 'nav-item-active' : ''}`}
+          >
+            <FileText size={18} />
+            <span>1. Telemetry & Scan Logs</span>
+            {activeTab === 'logs' && <ChevronRight size={14} className="ml-auto text-accent" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('schedules')}
+            className={`nav-item ${activeTab === 'schedules' ? 'nav-item-active' : ''}`}
+          >
+            <Calendar size={18} />
+            <span>2. Scan Scheduler</span>
+            {activeTab === 'schedules' && <ChevronRight size={14} className="ml-auto text-accent" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ioc')}
+            className={`nav-item ${activeTab === 'ioc' ? 'nav-item-active' : ''}`}
+          >
+            <Database size={18} />
+            <span>3. IOC & Signatures</span>
+            {activeTab === 'ioc' && <ChevronRight size={14} className="ml-auto text-accent" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('scan_mode')}
+            className={`nav-item ${activeTab === 'scan_mode' ? 'nav-item-active' : ''}`}
+          >
+            <Settings size={18} />
+            <span>4. Scan Action Modes</span>
+            {activeTab === 'scan_mode' && <ChevronRight size={14} className="ml-auto text-accent" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ip_block')}
+            className={`nav-item ${activeTab === 'ip_block' ? 'nav-item-active' : ''}`}
+          >
+            <ShieldAlert size={18} />
+            <span>5. IP Firewall Control</span>
+            {activeTab === 'ip_block' && <ChevronRight size={14} className="ml-auto text-accent" />}
+          </button>
+        </nav>
+
+        {/* Sidebar Footer User Info */}
+        <div className="sidebar-footer">
+          <div className="user-info-box">
+            <div className="avatar-icon">
+              <User size={16} />
+            </div>
+            <div className="user-details">
+              <span className="user-display-name">{user?.username || 'Admin'}</span>
+              <span className="user-role-badge">{user?.role || 'Administrator'}</span>
+            </div>
           </div>
 
-          {/* Admin User Profile */}
-          <div className="user-profile">
-            <User size={16} />
-            <span className="user-name">{user?.username || 'Admin'}</span>
-            <span className="role-tag">{user?.role || 'Admin'}</span>
-          </div>
-
-          {/* Logout Button */}
-          <button onClick={logout} className="btn-logout" title="Sign Out">
-            <LogOut size={18} />
+          <button onClick={logout} className="sidebar-logout-btn" title="Sign Out">
+            <LogOut size={16} />
+            <span>Logout</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Navigation Bar - 5 Feature Tabs */}
-      <nav className="tab-navigation-bar">
-        <button
-          onClick={() => setActiveTab('logs')}
-          className={`tab-btn ${activeTab === 'logs' ? 'tab-btn-active' : ''}`}
-        >
-          <FileText size={18} />
-          <span>1. Log Quét & Real-time</span>
-        </button>
+      {/* Main Right Content Layout */}
+      <div className="main-viewport">
+        {/* Top Header Status Bar */}
+        <header className="top-header">
+          <div className="header-status-title">
+            <h2 className="text-lg font-bold">
+              {activeTab === 'logs' && 'Real-time Scan Telemetry & Log Management'}
+              {activeTab === 'schedules' && 'Automated Periodic Scan Scheduling'}
+              {activeTab === 'ioc' && 'IOC & Threat Signature Distribution Engine'}
+              {activeTab === 'scan_mode' && 'Agent Scan Action Mode Configuration'}
+              {activeTab === 'ip_block' && 'Network Barrier & IP Firewall Dispatch'}
+            </h2>
+          </div>
 
-        <button
-          onClick={() => setActiveTab('schedules')}
-          className={`tab-btn ${activeTab === 'schedules' ? 'tab-btn-active' : ''}`}
-        >
-          <Calendar size={18} />
-          <span>2. Lập Lịch Quét</span>
-        </button>
+          <div className="header-right">
+            {/* WebSocket Connection Status */}
+            <div className={`ws-badge ${isConnected ? 'ws-connected' : 'ws-disconnected'}`}>
+              <Radio size={14} className={isConnected ? 'animate-pulse' : ''} />
+              <span>{isConnected ? 'LIVE FEED ONLINE' : 'FEED DISCONNECTED'}</span>
+            </div>
+          </div>
+        </header>
 
-        <button
-          onClick={() => setActiveTab('ioc')}
-          className={`tab-btn ${activeTab === 'ioc' ? 'tab-btn-active' : ''}`}
-        >
-          <Database size={18} />
-          <span>3. Cập Nhật IOC & Signature</span>
-        </button>
+        {/* Dashboard Body Content */}
+        <main className="dashboard-content">
+          {/* Summary Stat Cards */}
+          <StatCards summary={summary} />
 
-        <button
-          onClick={() => setActiveTab('scan_mode')}
-          className={`tab-btn ${activeTab === 'scan_mode' ? 'tab-btn-active' : ''}`}
-        >
-          <Settings size={18} />
-          <span>4. Chế Độ Quét</span>
-        </button>
+          {/* Dynamic Feature Tab Render */}
+          {activeTab === 'logs' && (
+            <ScanLogsTab
+              agents={agents}
+              logs={logs}
+              total={total}
+              loading={loading}
+              filters={filters}
+              updateFilters={updateFilters}
+              refresh={() => {
+                refresh();
+                fetchAgentsAndSummary();
+              }}
+              onSelectLog={(log) => setSelectedLog(log)}
+            />
+          )}
 
-        <button
-          onClick={() => setActiveTab('ip_block')}
-          className={`tab-btn ${activeTab === 'ip_block' ? 'tab-btn-active' : ''}`}
-        >
-          <ShieldAlert size={18} />
-          <span>5. Chặn / Bỏ Chặn IP</span>
-        </button>
-      </nav>
+          {activeTab === 'schedules' && <ScheduleScanTab agents={agents} />}
 
-      {/* Main Content Area */}
-      <main className="dashboard-main">
-        {/* Stat Summary Cards */}
-        <StatCards summary={summary} />
+          {activeTab === 'ioc' && <IocUpdateTab />}
 
-        {/* Dynamic Tab Content Render */}
-        {activeTab === 'logs' && (
-          <ScanLogsTab
-            agents={agents}
-            logs={logs}
-            total={total}
-            loading={loading}
-            filters={filters}
-            updateFilters={updateFilters}
-            refresh={() => {
-              refresh();
-              fetchAgentsAndSummary();
-            }}
-            onSelectLog={(log) => setSelectedLog(log)}
-          />
-        )}
+          {activeTab === 'scan_mode' && <ScanModeTab />}
 
-        {activeTab === 'schedules' && <ScheduleScanTab agents={agents} />}
-
-        {activeTab === 'ioc' && <IocUpdateTab />}
-
-        {activeTab === 'scan_mode' && <ScanModeTab />}
-
-        {activeTab === 'ip_block' && <IpBlockTab agents={agents} />}
-      </main>
+          {activeTab === 'ip_block' && <IpBlockTab agents={agents} />}
+        </main>
+      </div>
 
       {/* Log Detail Modal */}
       {selectedLog && (

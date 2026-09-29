@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, ShieldCheck, Trash2, CheckCircle2, Shield, Settings } from 'lucide-react';
+import { Eye, ShieldCheck, Trash2, CheckCircle2, Settings } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
 export const ScanModeTab = () => {
@@ -30,9 +30,9 @@ export const ScanModeTab = () => {
     try {
       await apiClient.post('/scan-mode', { mode: modeKey });
       setCurrentMode(modeKey);
-      setMsg(`Đã cập nhật chế độ quét mặc định toàn hệ thống sang [${modeKey}]!`);
+      setMsg(`System-wide scan action mode updated to [${modeKey}]!`);
     } catch (err) {
-      setMsg('Lỗi khi cập nhật chế độ quét: ' + (err.response?.data?.detail || err.message));
+      setMsg('Failed to update scan mode: ' + (err.response?.data?.detail || err.message));
     } finally {
       setUpdating(false);
     }
@@ -44,14 +44,14 @@ export const ScanModeTab = () => {
         <div className="flex items-center gap-3">
           <Settings size={28} className="text-accent" />
           <div>
-            <h2>Tính Năng 4: Chọn Chế Độ Quét (Scan Mode Selection)</h2>
-            <p>Thiết lập phương án xử lý tự động của Agent khi phát hiện mã độc (Nhận diện / Cách ly / Xóa).</p>
+            <h2>Feature 4: Agent Scan Action Mode Configuration</h2>
+            <p>Configure automated threat response behavior executed by agents upon malware detection (Detection Only / Quarantine / Delete).</p>
           </div>
         </div>
       </div>
 
       {msg && (
-        <div className={`banner-alert ${msg.includes('Lỗi') ? 'alert-danger' : 'alert-success'}`}>
+        <div className={`banner-alert ${msg.includes('Failed') ? 'alert-danger' : 'alert-success'}`}>
           {msg}
         </div>
       )}
@@ -68,18 +68,18 @@ export const ScanModeTab = () => {
             </div>
             {currentMode === 'DETECTED_ONLY' && (
               <span className="mode-active-badge">
-                <CheckCircle2 size={14} /> Đang Áp Dụng
+                <CheckCircle2 size={14} /> Currently Active
               </span>
             )}
           </div>
-          <h3 className="mode-title">1. Nhận Diện (Detection Only)</h3>
+          <h3 className="mode-title">1. Detection Only (Alert Only)</h3>
           <p className="mode-desc">
-            Chỉ thực hiện quét, phát hiện và đưa ra cảnh báo tới Server. Không thay đổi hoặc chỉnh sửa tệp tin trên máy trạm Agent.
+            Perform scanning, identify threats, and generate telemetry alerts to the Web Server. No file mutation or deletion occurs on client endpoints.
           </p>
           <ul className="mode-features">
-            <li>✓ An toàn tối đa cho dữ liệu hệ thống</li>
-            <li>✓ Phù hợp cho giai đoạn giám sát</li>
-            <li>✓ Không nguy cơ xóa nhầm tệp hệ thống</li>
+            <li>✓ Maximum safety for system files</li>
+            <li>✓ Ideal for initial audit and monitoring</li>
+            <li>✓ Zero risk of accidental false-positive deletion</li>
           </ul>
         </div>
 
@@ -94,18 +94,18 @@ export const ScanModeTab = () => {
             </div>
             {currentMode === 'QUARANTINE' && (
               <span className="mode-active-badge">
-                <CheckCircle2 size={14} /> Đang Áp Dụng
+                <CheckCircle2 size={14} /> Currently Active
               </span>
             )}
           </div>
-          <h3 className="mode-title">2. Cách Ly (Quarantine)</h3>
+          <h3 className="mode-title">2. Quarantine (File Isolation)</h3>
           <p className="mode-desc">
-            Tự động cách ly tệp độc hại vào thư mục mã hóa an toàn trên máy trạm Agent. Lưu kèm metadata cho phép khôi phục khi cần.
+            Safely isolate malicious files into an encrypted quarantine directory on the agent endpoint. Preserves metadata for rollback/restoration.
           </p>
           <ul className="mode-features">
-            <li>✓ Ngăn chặn mã độc thực thi ngay lập tức</li>
-            <li>✓ Hỗ trợ Rollback (Khôi phục tệp bị cách ly)</li>
-            <li>✓ Bảo vệ môi trường làm việc</li>
+            <li>✓ Instantly neutralizes execution risk</li>
+            <li>✓ Supports File Rollback & Restoration</li>
+            <li>✓ Secures local client environment</li>
           </ul>
         </div>
 
@@ -120,18 +120,18 @@ export const ScanModeTab = () => {
             </div>
             {currentMode === 'DELETE' && (
               <span className="mode-active-badge">
-                <CheckCircle2 size={14} /> Đang Áp Dụng
+                <CheckCircle2 size={14} /> Currently Active
               </span>
             )}
           </div>
-          <h3 className="mode-title">3. Xóa (Delete)</h3>
+          <h3 className="mode-title">3. Delete (Permanent Removal)</h3>
           <p className="mode-desc">
-            Xóa vĩnh viễn tệp tin độc hại khỏi ổ đĩa ngay khi phát hiện vi phạm chữ ký / YARA / AI.
+            Permanently delete verified malware files from target file paths upon signature / YARA / AI match.
           </p>
           <ul className="mode-features">
-            <li>✓ Loại bỏ hoàn toàn mối đe dọa</li>
-            <li>✓ Không tiêu tốn dung lượng lưu trữ cách ly</li>
-            <li>⚠️ Bắt buộc kiểm tra kỹ quy tắc nhận diện</li>
+            <li>✓ Completely removes threat artifacts</li>
+            <li>✓ Consumes zero quarantine storage</li>
+            <li>⚠️ Requires verified rule confidence</li>
           </ul>
         </div>
       </div>

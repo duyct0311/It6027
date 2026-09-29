@@ -37,11 +37,11 @@ export const ScanLogsTab = ({
         <div className="table-wrapper-card">
           <div className="table-header-info">
             <span className="font-semibold text-main">
-              Nhật Ký Quét Real-time ({total.toLocaleString()} sự kiện)
+              Real-time Scan Logs ({total.toLocaleString()} events ingested)
             </span>
             {filters.agent_id && (
               <span className="text-xs text-accent font-mono">
-                Agent: {filters.agent_id}
+                Agent Filter: {filters.agent_id}
               </span>
             )}
           </div>
