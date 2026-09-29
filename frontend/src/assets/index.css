@@ -723,6 +723,141 @@ body {
   border-radius: 8px;
 }
 
+/* Schedule Widget Components */
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.widget-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.widget-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.widget-card-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05)) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-main) !important;
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.widget-icon {
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+
+.widget-card-active .widget-icon {
+  color: var(--accent-primary);
+}
+
+.widget-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Chip Selector Group (e.g. Days of Week) */
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip-btn {
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+}
+
+.chip-btn-active {
+  background: var(--accent-primary) !important;
+  color: white !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 10px var(--accent-glow);
+  font-weight: 600;
+}
+
+/* Time & Scope Widget Grid */
+.time-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.scope-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.scope-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scope-tile:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+}
+
+.scope-tile-active {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-main) !important;
+  font-weight: 600;
+}
+
+/* Cron Summary Banner */
+.cron-summary-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.6));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
 /* Agent List Card */
 .agent-card {
   background: var(--bg-card);
