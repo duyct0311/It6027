@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentScanLogPayload",
+  "type": "object",
+  "required": [
+    "AgentID",
+    "Module",
+    "Name",
+    "Path",
+    "ScanType",
+    "Severity",
+    "Status",
+    "Time",
+    "version"
+  ],
+  "properties": {
+    "AgentID": {
+      "type": "string",
+      "description": "Unique UUID of the client agent host",
+      "example": "0a9582fe-ddbe-1d4b2e1d-1aa8-877458e6"
+    },
+    "Module": {
+      "type": "string",
+      "description": "Detection engine module identifier",
+      "enum": ["AI", "YARA", "Heuristic", "Hash", "Behavioral"],
+      "example": "AI"
+    },
+    "Name": {
+      "type": "string",
+      "description": "Name of detected malware threat",
+      "example": "AI-Detected Malware"
+    },
+    "Path": {
+      "type": "string",
+      "description": "Filesystem path on host machine",
+      "example": "C:\\Users\\tienl\\Downloads\\build_x86\\dll_test.exe"
+    },
+    "ScanType": {
+      "type": "string",
+      "description": "Originating scan category",
+      "example": "Realtime Protection"
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["Low", "Medium", "High", "Critical"],
+      "example": "Medium"
+    },
+    "Status": {
+      "type": "string",
+      "enum": ["DETECTED_ONLY", "QUARANTINED", "DELETED"],
+      "example": "DETECTED_ONLY"
+    },
+    "Time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp with timezone offset",
+      "example": "2026-09-28T15:49:02.061647+06:59"
+    },
+    "version": {
+      "type": "string",
+      "description": "Protocol version",
+      "example": "1.0"
+    }
+  }
+}

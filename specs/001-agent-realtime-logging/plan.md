@@ -1,54 +1,44 @@
-# Implementation Plan: Multi-Agent Realtime Scan Logging & Admin Auth
+# Implementation Plan: Multi-Agent Realtime Scan Logging & Automated Scan Scheduler
 
-**Branch**: `001-agent-realtime-logging` | **Date**: 2026-09-29 | **Spec**: [spec.md](file:///d:/Th%E1%BA%A1c%20s%C4%A9/IT6027/server/specs/001-agent-realtime-logging/spec.md)
+**Branch**: `001-agent-realtime-logging` | **Date**: 2026-09-29 | **Spec**: [specs/001-agent-realtime-logging/spec.md](spec.md)
 
 **Input**: Feature specification from `/specs/001-agent-realtime-logging/spec.md`
 
 ## Summary
 
-Build a high-performance, secure malware scan log ingestion system and Admin dashboard.
-- **Agent Telemetry & Real-Time Logging**: Expose `ws://server/ws/agent` WebSocket endpoint using Python FastAPI to ingest JSON log payloads from multiple concurrent Agents. Validate incoming schema using Pydantic v2 and persist into relational database with indexes on AgentID, Severity, Status, and Timestamp.
-- **Real-Time Dashboard Streaming**: Broadcast incoming scan events instantly to active React web dashboard clients connected via `/ws/dashboard`.
-- **Single Admin Authentication**: Protect Web Server APIs and web dashboard routes with JWT Bearer authentication, restricting access strictly to a single authenticated Admin user.
-- **Log Management & Multi-Criterion Filtering**: Provide React UI for viewing, grouping by AgentID, searching, and filtering scan logs by Severity, ScanType, Status, Module, and Date range.
+Implement a centralized Malware Scan Agent Web Server capable of real-time multi-agent WebSocket telemetry log ingestion, dedicated single Admin web authentication, multi-criterion log filtering, and automated periodic scan scheduling via interactive visual UI widgets.
 
 ## Technical Context
 
-**Language/Version**: Python 3.11+ (Backend), Node.js v18+ / React 18 (Frontend)
+**Language/Version**: Python 3.10+ (Backend) & JavaScript/JSX React (Frontend)
 
-**Primary Dependencies**:
-- Backend: FastAPI, Uvicorn, WebSockets, Pydantic v2, SQLAlchemy 2.0 (Async), Alembic, PyJWT, Passlib (Bcrypt)
-- Frontend: React 18, Vite, React Router v6, Lucide React (Icons), Axios, Tailwind CSS / Custom Modern CSS
+**Primary Dependencies**: 
+- Backend: FastAPI, Uvicorn, SQLAlchemy, Pydantic, Python-JOSE (JWT), Passlib (Bcrypt), Pytest
+- Frontend: React 18, Vite, Lucide-React, Axio
 
-**Storage**: SQLite (Async driver `aiosqlite` for local dev) / PostgreSQL (`asyncpg` for production)
+**Storage**: SQLite (`malware_scan.db`) with SQLAlchemy Async Sessions
 
-**Testing**: Pytest & pytest-asyncio (Backend unit & integration testing), Vitest / React Testing Library (Frontend UI testing)
+**Testing**: Pytest for backend API & WebSocket integration tests; Vite build verification for frontend
 
-**Target Platform**: Cross-platform Web Server (Windows / Linux Server), Web Browser (Chrome, Firefox, Edge, Safari)
+**Target Platform**: Cross-platform Web Application (Windows/Linux server backend, web browser frontend)
 
-**Project Type**: Web application (Decoupled Python Backend REST + WebSocket API, React Frontend SPA)
+**Project Type**: Decoupled Web Application (FastAPI Backend + React Frontend)
 
-**Performance Goals**:
-- Ingest up to 1,000 log events/second across multiple concurrent Agent connections.
-- Push real-time log updates from Agent WebSocket to Admin Dashboard UI in <500ms.
-- Log filtering queries over 100,000 records return in <2 seconds.
+**Performance Goals**: Sub-500ms WebSocket log ingestion & broadcast to Web UI; <1.5s Admin authentication; <2s filtering across 100k records
 
-**Constraints**:
-- Strict input validation via Pydantic to prevent SQL injection, path traversal, or command injection.
-- Unauthenticated requests to protected REST/WS endpoints must be rejected with 401 Unauthorized.
-- Malformed payloads must be quarantined without dropping WebSocket sessions.
+**Constraints**: Single Admin account security enforcement; Strict Pydantic log validation schema; Fixed left sidebar navigation layout in English
 
-**Scale/Scope**: Multi-agent support (10 to 1,000+ connected agents), single Admin user role.
+**Scale/Scope**: Support 100+ concurrent WebSocket Agent streams & 5 main Admin feature tabs
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **Principle I: Security-First Architecture & Zero-Trust Agent Communication**: PASSED. FastAPI backend validates all incoming WebSocket payloads via strict Pydantic schemas. Admin routes protected with JWT token authentication.
-- **Principle II: Safe Action Modes & Command Dispatch Integrity**: PASSED. Log schema supports `Status` values (`DETECTED_ONLY`, `QUARANTINED`, `DELETED`).
-- **Principle III: Auditability & Immutable Log Management**: PASSED. Scan logs record `AgentID`, `event_time`, file `path`, `severity`, `status`, and `module` with immutable database timestamps. Malformed payloads recorded in `log_quarantine`.
-- **Principle IV: Technology Stack & Architectural Separation**: PASSED. Decoupled architecture with Python FastAPI backend and React frontend.
-- **Principle V: Test-Driven Security & Automated Verification**: PASSED. Test suites planned for JWT auth, WebSocket parsing, quarantine logic, and API route protection.
+1. **Principle I (Security-First Architecture & Zero-Trust Agent Communication)**: ✅ PASSED. Single Admin JWT authentication enforced on all protected APIs; WebSocket handshake tokens & Pydantic schema validation enabled.
+2. **Principle II (Safe Action Modes & Command Dispatch Integrity)**: ✅ PASSED. Scan Action Modes (`DETECTED_ONLY`, `QUARANTINE`, `DELETE`) defined and verified in scan scheduler & mode tabs.
+3. **Principle III (Auditability & Immutable Log Management)**: ✅ PASSED. All incoming agent logs and schedule events saved immutably in SQLite database.
+4. **Principle IV (Technology Stack & Architectural Separation)**: ✅ PASSED. Clean separation between FastAPI backend REST/WebSocket endpoints and React Web frontend.
+5. **Principle V (Test-Driven Security & Automated Verification)**: ✅ PASSED. Backend integration tests (Pytest) & Vite build verification passing 100%.
 
 ## Project Structure
 
@@ -56,90 +46,74 @@ Build a high-performance, secure malware scan log ingestion system and Admin das
 
 ```text
 specs/001-agent-realtime-logging/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-│   ├── agent-ws-schema.json
-│   ├── admin-api-spec.json
-│   └── dashboard-ws-schema.json
-├── checklists/
-│   └── requirements.md
-└── tasks.md             # Phase 2 output (/speckit-tasks command)
+├── plan.md              # Implementation Plan (/speckit-plan)
+├── research.md          # Technical Research (/speckit-plan Phase 0)
+├── data-model.md        # Data Models & Schemas (/speckit-plan Phase 1)
+├── quickstart.md        # Developer Quickstart (/speckit-plan Phase 1)
+├── contracts/           # API & WebSocket Protocol Contracts (/speckit-plan Phase 1)
+│   ├── agent_ws_protocol.json
+│   └── rest_api_schemas.json
+└── checklists/          # Requirements Quality Checklists
+    └── requirements.md
 ```
 
-### Source Code (repository root)
+### Source Code Structure
 
 ```text
 backend/
 ├── app/
 │   ├── api/
-│   │   ├── deps.py               # Dependency injection & JWT auth verifiers
-│   │   ├── v1/
-│   │   │   ├── auth.py           # Admin login endpoints
-│   │   │   ├── logs.py           # Scan log query & filter REST endpoints
-│   │   │   └── agents.py         # Agent listing & status endpoints
-│   │   └── websockets/
-│   │       ├── agent_ws.py       # Agent WebSocket endpoint (/ws/agent)
-│   │       └── dashboard_ws.py   # Admin Dashboard WebSocket endpoint (/ws/dashboard)
+│   │   ├── deps.py
+│   │   └── v1/
+│   │       ├── auth.py
+│   │       ├── logs.py
+│   │       ├── agents.py
+│   │       ├── schedules.py
+│   │       ├── ioc.py
+│   │       ├── scan_mode.py
+│   │       └── ip_block.py
 │   ├── core/
-│   │   ├── config.py             # Environment config & secrets
-│   │   └── security.py           # Password hashing & JWT token creation/verification
+│   │   ├── config.py
+│   │   └── security.py
 │   ├── db/
-│   │   ├── base.py               # SQLAlchemy declarative base
-│   │   ├── init_db.py            # Initial DB setup & Admin seed
-│   │   └── session.py           # Async DB session factory
+│   │   ├── session.py
+│   │   └── init_db.py
 │   ├── models/
-│   │   ├── admin_user.py         # AdminUser SQLAlchemy model
-│   │   ├── agent.py              # Agent SQLAlchemy model
-│   │   ├── scan_log.py           # ScanLog SQLAlchemy model
-│   │   └── log_quarantine.py     # LogQuarantine SQLAlchemy model
+│   │   ├── admin_user.py
+│   │   ├── agent.py
+│   │   ├── scan_log.py
+│   │   └── scan_schedule.py
 │   ├── schemas/
-│   │   ├── auth.py               # Pydantic auth request/response schemas
-│   │   ├── scan_log.py           # Pydantic agent log ingestion schema
-│   │   └── agent.py              # Pydantic agent status schema
-│   ├── services/
-│   │   ├── broadcast.py          # WebSocket ConnectionManager & broadcast hub
-│   │   ├── log_service.py        # Log ingestion & query business logic
-│   │   └── auth_service.py       # Authentication business logic
-│   └── main.py                   # FastAPI app entry point
+│   └── main.py
 ├── scripts/
-│   └── agent_simulator.py        # Test agent script for sending live logs over WebSocket
+│   └── agent_simulator.py
 └── tests/
-    ├── unit/                     # Pydantic schema & password hashing tests
-    └── integration/              # WebSocket & Auth integration tests
+    └── integration/
 
 frontend/
 ├── src/
-│   ├── assets/                   # Static assets & styles
+│   ├── assets/
+│   │   └── index.css
 │   ├── components/
-│   │   ├── common/               # UI layout, Header, Sidebar, StatCards
-│   │   ├── auth/                 # Admin Login Form
-│   │   ├── logs/                 # Log Table, Filter Bar, Log Detail Modal
-│   │   └── agents/               # Agent List & Status Cards
+│   │   ├── common/
+│   │   ├── logs/
+│   │   └── tabs/
+│   │       ├── ScanLogsTab.jsx
+│   │       ├── ScheduleScanTab.jsx
+│   │       ├── IocUpdateTab.jsx
+│   │       ├── ScanModeTab.jsx
+│   │       └── IpBlockTab.jsx
 │   ├── hooks/
-│   │   ├── useAuth.js            # Admin authentication state hook
-│   │   ├── useWebSocket.js       # Real-time WebSocket connection hook
-│   │   └── useScanLogs.js        # Log fetch & filter data hook
 │   ├── pages/
-│   │   ├── LoginPage.jsx         # Admin Login Screen
-│   │   └── DashboardPage.jsx     # Main Admin Operations Dashboard
-│   ├── services/
-│   │   ├── api.js                # Axios API client with Bearer auth interceptor
-│   │   └── authService.js        # Auth API functions
-│   ├── App.jsx                   # React App Router & Protected Routes
-│   └── main.jsx                  # React DOM root
-├── index.html
-├── package.json
-└── vite.config.js
+│   │   ├── LoginPage.jsx
+│   │   └── DashboardPage.jsx
+│   └── services/
+│       └── api.js
+└── package.json
 ```
-
-**Structure Decision**: Web application layout (Option 2: `backend/` Python FastAPI server and `frontend/` React Vite application).
 
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| In-memory Broadcast Hub | Enables zero-latency live updates from agent WS to dashboard WS | Polling DB every second causes unnecessary DB load and latency |
-| Dual WebSocket Endpoints | Decouples agent log streaming protocol from admin UI feed | Merging agent and dashboard feeds complicates security & protocol schemas |
+| None | N/A | Fully compliant with constitution guidelines |

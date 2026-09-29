@@ -1,77 +1,33 @@
-# Phase 0 Research: Multi-Agent Realtime Scan Logging & Admin Auth
+# Technical Research & Architecture Decisions
 
-**Feature Branch**: `001-agent-realtime-logging`
-**Date**: 2026-09-29
-
-## Executive Summary & Technical Architecture Decisions
-
-This research resolves key technical choices for implementing multi-agent real-time malware scan log ingestion over WebSockets, single Admin authentication, and log management UI.
-
----
-
-## 1. Agent Communication & WebSocket Ingestion Protocol
-
-### Decision: FastAPI Native WebSockets (`fastapi.WebSocket`) + In-Memory Event Hub
-
-- **Rationale**: FastAPI provides built-in, low-latency, asynchronous WebSocket handlers backed by Starlette and `anyio`/`uvicorn`. For agent log ingestion:
-  - Agent connects to `wss://server/ws/agent?agent_id=<UUID>&token=<AGENT_SECRET>`
-  - Incoming JSON payloads are parsed and validated via Pydantic v2 schemas asynchronously without blocking the event loop.
-  - Valid logs are persisted via SQLAlchemy Async engine and dispatched to an in-memory `BroadcastManager` which pushes updates immediately to active Admin web clients connected to `wss://server/ws/dashboard`.
-- **Alternatives Considered**:
-  - *Socket.IO*: Adds extra client dependency overhead and custom protocol headers; raw WebSockets are cleaner for lightweight Python/Go/C++ agent clients.
-  - *HTTP REST Polling*: Rejected due to high latency (>1-3s) and network overhead under multi-agent load.
-
----
-
-## 2. Admin Authentication & Session Management
-
-### Decision: JWT Token (Bearer Auth in HTTP headers / WebSocket Sec-WebSocket-Protocol or Query Auth) + Bcrypt Hashing
-
-- **Rationale**: Single Admin authentication enforced strictly per Constitution Principle I & User Story 2.
-  - Admin logs in at `/api/v1/auth/login` with `username` and `password`.
-  - Password verified against `AdminUser` hash stored using `passlib` with `bcrypt`.
-  - Server issues a signed JWT access token (`HS256`, 8-hour expiration).
-  - Web dashboard includes `Authorization: Bearer <JWT>` for all REST API endpoints, and passes JWT token during WebSocket handshake for protected dashboard feeds.
-- **Alternatives Considered**:
-  - *Stateful Cookie Sessions*: Harder to use securely with decoupled React frontend and WebSocket initial connection handshakes without CSRF tokens.
-
----
-
-## 3. Database & Persistence Layer
-
-### Decision: Async SQLAlchemy 2.0 ORM + SQLite (Development) / PostgreSQL (Staging/Production) + Alembic
-
+## Research Item 1: Real-time Multi-Agent WebSocket Log Ingestion Architecture
+- **Decision**: Implement a FastAPI WebSocket handler at `/ws/agent` utilizing an asynchronous `asyncio.Queue` memory buffer and Pydantic schema validation.
 - **Rationale**: 
-  - Async DB driver (`aiosqlite` for local dev, `asyncpg` for production) prevents blocking the FastAPI async event loop during high-volume log writes.
-  - Schema includes indexed fields: `agent_id`, `severity`, `status`, `scan_type`, `time` (UTC timestamp) for fast multi-criterion filtering across 100,000+ records.
+  - Direct database writes per WebSocket packet can cause SQLite write lock contention during log bursts (e.g. 1,000 logs/sec).
+  - An async memory queue flushes logs to SQLite in batch transactions every 100ms or 50 items, keeping response time under 50ms and ensuring realtime Web UI streaming via `/ws/dashboard` broadcast.
 - **Alternatives Considered**:
-  - *MongoDB / Document DB*: Relational model with foreign keys linking `ScanLog` to `Agent` is more structured and fits strict audit requirements better.
+  - *Direct synchronous DB insert per packet*: Rejected due to high risk of DB lock contention and event loop blocking.
+  - *External Redis/RabbitMQ queue*: Rejected to keep single-server deployment lightweight and self-contained per technology stack requirements.
 
----
-
-## 4. Frontend Architecture (React Web Dashboard)
-
-### Decision: React 18 + Vite + Tailwind CSS / Vanilla CSS + React Query / Custom `useWebSocket` Hook
-
+## Research Item 2: Admin Authentication & Access Control Security
+- **Decision**: OAuth2 Password bearer token authentication using JWT (JSON Web Tokens) with HS256/RS256 signature and bcrypt password hashing.
 - **Rationale**:
-  - React 18 provides component-driven UI rendering with high performance.
-  - Custom `useWebSocket` hook with auto-reconnection and event queue maintains real-time UI synchronization without page refreshes.
-  - Virtuoso / Virtualized list rendering for log feeds ensuring 60 FPS even when displaying thousands of log items.
+  - Enforces Principle I (Security-First Architecture) and Principle IV (Architectural Separation between React UI and FastAPI REST APIs).
+  - Single Admin account initialized securely on DB bootstrap (`admin` / default hashed password or environment variable override).
+  - All protected REST routes and dashboard WebSocket subscriptions enforce JWT verification via FastAPI dependencies.
+- **Alternatives Considered**:
+  - *Session cookies*: Rejected to maintain stateless REST API design suitable for decoupled React Web UI.
 
----
+## Research Item 3: Asynchronous Scan Scheduler Engine
+- **Decision**: Use an in-memory/DB-backed scheduler loop using `croniter` parsing and SQLite `ScanSchedule` records to evaluate active cron rules every 10 seconds.
+- **Rationale**:
+  - When a schedule triggers (e.g. `0 2 * * 1`), the server looks up targeted connected WebSocket agents (`target_agents = ALL` or specific `AgentID`) and sends an active JSON command payload: `{"command": "START_SCAN", "scope": s.scan_scope, "mode": s.scan_mode, "schedule_id": s.id}`.
+  - Agent receives command, executes background thread scan, and streams results back over WebSocket.
+- **Alternatives Considered**:
+  - *Celery with Redis*: Rejected for unnecessary infrastructural overhead when SQLite + FastAPI async loop handles scheduled dispatches efficiently.
 
-## 5. Security Gates & Payload Validation
-
-### Decision: Pydantic v2 Strict Model Validation & Malformed Log Quarantine
-
-- **Schema Rules**:
-  - `AgentID`: UUID string format.
-  - `Module`: Enum or string (`AI`, `YARA`, `Hash`, `Behavior`).
-  - `Name`: Non-empty string.
-  - `Path`: Normalized file path string (prevents injection / malformed byte sequences).
-  - `ScanType`: Enum (`Realtime Protection`, `Manual Scan`, `Scheduled Scan`).
-  - `Severity`: Enum (`Low`, `Medium`, `High`, `Critical`).
-  - `Status`: Enum (`DETECTED_ONLY`, `QUARANTINED`, `DELETED`).
-  - `Time`: ISO 8601 string parsed to UTC datetime.
-  - `version`: String (e.g. `"1.0"`).
-- **Quarantine Safeguard**: Malformed payloads are saved into `log_quarantine` table with raw payload and error reason without terminating the agent's WebSocket session.
+## Research Item 4: Interactive React Scan Scheduling Widgets
+- **Decision**: Render interactive visual tile widgets (Frequency: Hourly/Daily/Weekly/Monthly/Custom), Hour/Minute time pickers, Day-of-Week chip buttons, Day-of-Month selector, Scope presets (`C:\Program Files`, `C:\Users`, `C:\Windows\Temp`, `C:\`, Custom), and Scan Action Mode tiles.
+- **Rationale**:
+  - Dynamically calculates valid 5-part Cron expressions (e.g. `30 14 * * 1`) and renders an instant human-readable preview banner (e.g., *"Runs Every Monday at 02:30 PM"*).
+  - Prevents human syntax errors while preserving full backend cron flexibility.

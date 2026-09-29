@@ -1,0 +1,93 @@
+{
+  "endpoints": {
+    "auth_login": {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "request": {
+        "username": "admin",
+        "password": "adminpassword"
+      },
+      "response": {
+        "access_token": "eyJhbGciOiJIUzI1Ni...",
+        "token_type": "bearer",
+        "user": {
+          "id": 1,
+          "username": "admin",
+          "role": "Admin"
+        }
+      }
+    },
+    "get_scan_logs": {
+      "method": "GET",
+      "path": "/api/v1/logs",
+      "query_params": {
+        "agent_id": "string (optional)",
+        "severity": "string (optional)",
+        "status": "string (optional)",
+        "scan_type": "string (optional)",
+        "search": "string (optional)",
+        "page": "integer (default 1)",
+        "limit": "integer (default 50)"
+      },
+      "response": {
+        "total": 174,
+        "page": 1,
+        "limit": 50,
+        "items": [
+          {
+            "id": 1,
+            "agent_id": "0a9582fe-ddbe-1d4b2e1d-1aa8-877458e6",
+            "module": "AI",
+            "name": "AI-Detected Malware",
+            "path": "C:\\Users\\tienl\\Downloads\\build_x86\\dll_test.exe",
+            "scan_type": "Realtime Protection",
+            "severity": "Medium",
+            "status": "DETECTED_ONLY",
+            "time": "2026-09-28T15:49:02.061647+06:59",
+            "version": "1.0",
+            "created_at": "2026-09-28T08:50:00Z"
+          }
+        ]
+      }
+    },
+    "schedules": {
+      "get_schedules": {
+        "method": "GET",
+        "path": "/api/v1/schedules",
+        "response": [
+          {
+            "id": 1,
+            "name": "Periodic System Scan",
+            "cron_expression": "0 2 * * *",
+            "scan_scope": "C:\\Program Files",
+            "target_agents": "ALL",
+            "scan_mode": "DETECTED_ONLY",
+            "is_active": true,
+            "created_at": "2026-09-28T10:00:00Z"
+          }
+        ]
+      },
+      "create_schedule": {
+        "method": "POST",
+        "path": "/api/v1/schedules",
+        "request": {
+          "name": "Daily Malware Deep Audit",
+          "cron_expression": "0 2 * * *",
+          "scan_scope": "C:\\Program Files",
+          "target_agents": "ALL",
+          "scan_mode": "DETECTED_ONLY"
+        },
+        "response": {
+          "id": 2,
+          "name": "Daily Malware Deep Audit",
+          "cron_expression": "0 2 * * *",
+          "scan_scope": "C:\\Program Files",
+          "target_agents": "ALL",
+          "scan_mode": "DETECTED_ONLY",
+          "is_active": true,
+          "created_at": "2026-09-29T10:00:00Z"
+        }
+      }
+    }
+  }
+}
