@@ -6,7 +6,7 @@
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing.
 
-## Format: `- [ ] [ID] [P?] [Story?] Description with file path`
+## Format: `- [x] [ID] [P?] [Story?] Description with file path`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4, US5)
@@ -18,9 +18,9 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create backend and frontend folder structure per plan.md in backend/ and frontend/
-- [ ] T002 [P] Configure environment variables and app config in backend/app/core/config.py
-- [ ] T003 [P] Setup Vite React dashboard base project in frontend/package.json
+- [x] T001 Create backend and frontend folder structure per plan.md in backend/ and frontend/
+- [x] T002 [P] Configure environment variables and app config in backend/app/core/config.py
+- [x] T003 [P] Setup Vite React dashboard base project in frontend/package.json
 
 ---
 
@@ -30,10 +30,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Setup SQLAlchemy async database engine and session factory in backend/app/db/session.py
-- [ ] T005 [P] Setup Pydantic base configuration and response schemas in backend/app/schemas/scan_log.py
-- [ ] T006 [P] Initialize SQLite database and seed Admin user account in backend/app/db/init_db.py
-- [ ] T007 Configure FastAPI main router and CORS middleware in backend/app/main.py
+- [x] T004 Setup SQLAlchemy async database engine and session factory in backend/app/db/session.py
+- [x] T005 [P] Setup Pydantic base configuration and response schemas in backend/app/schemas/scan_log.py
+- [x] T006 [P] Initialize SQLite database and seed Admin user account in backend/app/db/init_db.py
+- [x] T007 Configure FastAPI main router and CORS middleware in backend/app/main.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -47,12 +47,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [P] [US1] Define Agent entity model in backend/app/models/agent.py
-- [ ] T009 [P] [US1] Define ScanLog entity model in backend/app/models/scan_log.py
-- [ ] T010 [US1] Implement Agent WebSocket endpoint `/ws/agent` with Pydantic validation in backend/app/main.py
-- [ ] T011 [US1] Implement WebSocket broadcast manager for dashboard subscribers in backend/app/main.py
-- [ ] T012 [P] [US1] Implement Agent simulator script for streaming logs in backend/scripts/agent_simulator.py
-- [ ] T013 [US1] Write integration test for WebSocket log ingestion in backend/tests/integration/test_agent_ws.py
+- [x] T008 [P] [US1] Define Agent entity model in backend/app/models/agent.py
+- [x] T009 [P] [US1] Define ScanLog entity model in backend/app/models/scan_log.py
+- [x] T010 [US1] Implement Agent WebSocket endpoint `/ws/agent` with Pydantic validation in backend/app/main.py
+- [x] T011 [US1] Implement WebSocket broadcast manager for dashboard subscribers in backend/app/main.py
+- [x] T012 [P] [US1] Implement Agent simulator script for streaming logs in backend/scripts/agent_simulator.py
+- [x] T013 [US1] Write integration test for WebSocket log ingestion in backend/tests/integration/test_agent_ws.py
 
 **Checkpoint**: User Story 1 is fully functional and testable independently (MVP ready!)
 
@@ -66,13 +66,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [P] [US2] Define AdminUser entity model in backend/app/models/admin_user.py
-- [ ] T015 [P] [US2] Implement JWT token helper and password hashing utilities in backend/app/core/security.py
-- [ ] T016 [US2] Implement Admin dependency `get_current_admin` in backend/app/api/deps.py
-- [ ] T017 [US2] Implement Auth login endpoint `/api/v1/auth/login` in backend/app/api/v1/auth.py
-- [ ] T018 [P] [US2] Implement React Auth hook and Context provider in frontend/src/hooks/useAuth.jsx
-- [ ] T019 [US2] Create Admin login page component in frontend/src/pages/LoginPage.jsx
-- [ ] T020 [US2] Write integration test for Auth API in backend/tests/integration/test_auth.py
+- [x] T014 [P] [US2] Define AdminUser entity model in backend/app/models/admin_user.py
+- [x] T015 [P] [US2] Implement JWT token helper and password hashing utilities in backend/app/core/security.py
+- [x] T016 [US2] Implement Admin dependency `get_current_admin` in backend/app/api/deps.py
+- [x] T017 [US2] Implement Auth login endpoint `/api/v1/auth/login` in backend/app/api/v1/auth.py
+- [x] T018 [P] [US2] Implement React Auth hook and Context provider in frontend/src/hooks/useAuth.jsx
+- [x] T019 [US2] Create Admin login page component in frontend/src/pages/LoginPage.jsx
+- [x] T020 [US2] Write integration test for Auth API in backend/tests/integration/test_auth.py
 
 **Checkpoint**: User Story 2 authentication is complete and protects all API channels.
 
@@ -86,13 +86,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T021 [P] [US3] Implement Log query API `/api/v1/logs` with filter parameters in backend/app/api/v1/logs.py
-- [ ] T022 [P] [US3] Implement React custom hook for scan log fetching and filtering in frontend/src/hooks/useScanLogs.js
-- [ ] T023 [US3] Create Log Filter Bar component in frontend/src/components/logs/LogFilterBar.jsx
-- [ ] T024 [US3] Create Log Table component with status badges in frontend/src/components/logs/LogTable.jsx
-- [ ] T025 [US3] Create Log Detail Inspector modal component in frontend/src/components/logs/LogDetailModal.jsx
-- [ ] T026 [US3] Create Scan Logs Tab container component in frontend/src/components/tabs/ScanLogsTab.jsx
-- [ ] T027 [US3] Write integration test for Log Filter API in backend/tests/integration/test_logs_api.py
+- [x] T021 [P] [US3] Implement Log query API `/api/v1/logs` with filter parameters in backend/app/api/v1/logs.py
+- [x] T022 [P] [US3] Implement React custom hook for scan log fetching and filtering in frontend/src/hooks/useScanLogs.js
+- [x] T023 [US3] Create Log Filter Bar component in frontend/src/components/logs/LogFilterBar.jsx
+- [x] T024 [US3] Create Log Table component with status badges in frontend/src/components/logs/LogTable.jsx
+- [x] T025 [US3] Create Log Detail Inspector modal component in frontend/src/components/logs/LogDetailModal.jsx
+- [x] T026 [US3] Create Scan Logs Tab container component in frontend/src/components/tabs/ScanLogsTab.jsx
+- [x] T027 [US3] Write integration test for Log Filter API in backend/tests/integration/test_logs_api.py
 
 **Checkpoint**: User Story 3 log management and filtering is fully testable.
 
@@ -106,10 +106,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T028 [P] [US4] Implement Agent summary metrics endpoint `/api/v1/agents/summary` in backend/app/api/v1/agents.py
-- [ ] T029 [P] [US4] Create Summary Stat Cards component in frontend/src/components/common/StatCards.jsx
-- [ ] T030 [US4] Create Agent List Sidebar card component in frontend/src/components/agents/AgentListCard.jsx
-- [ ] T031 [US4] Integrate Top Status Header bar with WebSocket connection indicator in frontend/src/pages/DashboardPage.jsx
+- [x] T028 [P] [US4] Implement Agent summary metrics endpoint `/api/v1/agents/summary` in backend/app/api/v1/agents.py
+- [x] T029 [P] [US4] Create Summary Stat Cards component in frontend/src/components/common/StatCards.jsx
+- [x] T030 [US4] Create Agent List Sidebar card component in frontend/src/components/agents/AgentListCard.jsx
+- [x] T031 [US4] Integrate Top Status Header bar with WebSocket connection indicator in frontend/src/pages/DashboardPage.jsx
 
 **Checkpoint**: User Story 4 provides real-time situational awareness of all endpoints.
 
@@ -123,11 +123,11 @@
 
 ### Implementation for User Story 5
 
-- [ ] T032 [P] [US5] Define ScanSchedule entity model in backend/app/models/scan_schedule.py
-- [ ] T033 [P] [US5] Implement Scan Schedule CRUD endpoints `/api/v1/schedules` in backend/app/api/v1/schedules.py
-- [ ] T034 [US5] Add Schedule widget CSS rules for frequency tiles, time pickers, and banners in frontend/src/assets/index.css
-- [ ] T035 [US5] Implement interactive Schedule Scan Tab component with widgets in frontend/src/components/tabs/ScheduleScanTab.jsx
-- [ ] T036 [US5] Integrate Schedule Scan Tab into 5-tab Left Sidebar Dashboard in frontend/src/pages/DashboardPage.jsx
+- [x] T032 [P] [US5] Define ScanSchedule entity model in backend/app/models/scan_schedule.py
+- [x] T033 [P] [US5] Implement Scan Schedule CRUD endpoints `/api/v1/schedules` in backend/app/api/v1/schedules.py
+- [x] T034 [US5] Add Schedule widget CSS rules for frequency tiles, time pickers, and banners in frontend/src/assets/index.css
+- [x] T035 [US5] Implement interactive Schedule Scan Tab component with widgets in frontend/src/components/tabs/ScheduleScanTab.jsx
+- [x] T036 [US5] Integrate Schedule Scan Tab into 5-tab Left Sidebar Dashboard in frontend/src/pages/DashboardPage.jsx
 
 **Checkpoint**: User Story 5 allows zero-error automated scan scheduling via visual widgets.
 
@@ -137,10 +137,10 @@
 
 **Purpose**: Responsive UI fixes, English translations, and production build verification
 
-- [ ] T037 Convert navigation to fixed 270px Left Sidebar layout with full English translation in frontend/src/pages/DashboardPage.jsx
-- [ ] T038 Fix right-edge layout overflow and responsive grid clipping in frontend/src/assets/index.css
-- [ ] T039 Verify production build with Vite in frontend/ (npm run build)
-- [ ] T040 Run full backend test suite with Pytest in backend/ (python -m pytest)
+- [x] T037 Convert navigation to fixed 270px Left Sidebar layout with full English translation in frontend/src/pages/DashboardPage.jsx
+- [x] T038 Fix right-edge layout overflow and responsive grid clipping in frontend/src/assets/index.css
+- [x] T039 Verify production build with Vite in frontend/ (npm run build)
+- [x] T040 Run full backend test suite with Pytest in backend/ (python -m pytest)
 
 ---
 
