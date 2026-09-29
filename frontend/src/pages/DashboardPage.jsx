@@ -1,19 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, LogOut, Radio, User, RefreshCw } from 'lucide-react';
+import { Shield, LogOut, Radio, User, FileText, Calendar, Database, Settings, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useScanLogs } from '../hooks/useScanLogs';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { StatCards } from '../components/common/StatCards';
-import { AgentListCard } from '../components/agents/AgentListCard';
-import { LogFilterBar } from '../components/logs/LogFilterBar';
-import { LogTable } from '../components/logs/LogTable';
 import { LogDetailModal } from '../components/logs/LogDetailModal';
+
+// 5 Main Feature Tabs
+import { ScanLogsTab } from '../components/tabs/ScanLogsTab';
+import { ScheduleScanTab } from '../components/tabs/ScheduleScanTab';
+import { IocUpdateTab } from '../components/tabs/IocUpdateTab';
+import { ScanModeTab } from '../components/tabs/ScanModeTab';
+import { IpBlockTab } from '../components/tabs/IpBlockTab';
+
 import { apiClient } from '../services/api';
 
 export const DashboardPage = () => {
   const { user, logout } = useAuth();
   const { logs, total, loading, filters, updateFilters, refresh, prependRealtimeLog } = useScanLogs();
   
+  const [activeTab, setActiveTab] = useState('logs'); // 'logs' | 'schedules' | 'ioc' | 'scan_mode' | 'ip_block'
   const [agents, setAgents] = useState([]);
   const [summary, setSummary] = useState({});
   const [selectedLog, setSelectedLog] = useState(null);
@@ -55,8 +61,8 @@ export const DashboardPage = () => {
             <Shield size={24} />
           </div>
           <div>
-            <h1 className="header-title">Malware Scan Manager</h1>
-            <span className="header-subtitle">Real-time Telemetry & Agent Operations</span>
+            <h1 className="header-title">Malware Scan Agent Manager</h1>
+            <span className="header-subtitle">Hệ Thống Quản Lý Agent Quét Mã Độc Tập Trung</span>
           </div>
         </div>
 
@@ -81,55 +87,78 @@ export const DashboardPage = () => {
         </div>
       </header>
 
+      {/* Main Navigation Bar - 5 Feature Tabs */}
+      <nav className="tab-navigation-bar">
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`tab-btn ${activeTab === 'logs' ? 'tab-btn-active' : ''}`}
+        >
+          <FileText size={18} />
+          <span>1. Log Quét & Real-time</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('schedules')}
+          className={`tab-btn ${activeTab === 'schedules' ? 'tab-btn-active' : ''}`}
+        >
+          <Calendar size={18} />
+          <span>2. Lập Lịch Quét</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ioc')}
+          className={`tab-btn ${activeTab === 'ioc' ? 'tab-btn-active' : ''}`}
+        >
+          <Database size={18} />
+          <span>3. Cập Nhật IOC & Signature</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('scan_mode')}
+          className={`tab-btn ${activeTab === 'scan_mode' ? 'tab-btn-active' : ''}`}
+        >
+          <Settings size={18} />
+          <span>4. Chế Độ Quét</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ip_block')}
+          className={`tab-btn ${activeTab === 'ip_block' ? 'tab-btn-active' : ''}`}
+        >
+          <ShieldAlert size={18} />
+          <span>5. Chặn / Bỏ Chặn IP</span>
+        </button>
+      </nav>
+
       {/* Main Content Area */}
       <main className="dashboard-main">
         {/* Stat Summary Cards */}
         <StatCards summary={summary} />
 
-        {/* Dashboard Grid: Agents Sidebar & Log Management */}
-        <div className="dashboard-grid">
-          {/* Left Sidebar: Connected Agents */}
-          <div className="sidebar-col">
-            <AgentListCard
-              agents={agents}
-              selectedAgentId={filters.agent_id}
-              onSelectAgent={(agentId) => updateFilters({ agent_id: agentId })}
-            />
-          </div>
+        {/* Dynamic Tab Content Render */}
+        {activeTab === 'logs' && (
+          <ScanLogsTab
+            agents={agents}
+            logs={logs}
+            total={total}
+            loading={loading}
+            filters={filters}
+            updateFilters={updateFilters}
+            refresh={() => {
+              refresh();
+              fetchAgentsAndSummary();
+            }}
+            onSelectLog={(log) => setSelectedLog(log)}
+          />
+        )}
 
-          {/* Right Area: Log Filter Bar & Telemetry Table */}
-          <div className="content-col">
-            <LogFilterBar
-              filters={filters}
-              onFilterChange={updateFilters}
-              agents={agents}
-              onRefresh={() => {
-                refresh();
-                fetchAgentsAndSummary();
-              }}
-              loading={loading}
-            />
+        {activeTab === 'schedules' && <ScheduleScanTab agents={agents} />}
 
-            <div className="table-wrapper-card">
-              <div className="table-header-info">
-                <span className="font-semibold text-main">
-                  Malware Telemetry Logs ({total.toLocaleString()} total events)
-                </span>
-                {filters.agent_id && (
-                  <span className="text-xs text-accent">
-                    Filtered by Agent: {filters.agent_id}
-                  </span>
-                )}
-              </div>
+        {activeTab === 'ioc' && <IocUpdateTab />}
 
-              <LogTable
-                logs={logs}
-                loading={loading}
-                onSelectLog={(log) => setSelectedLog(log)}
-              />
-            </div>
-          </div>
-        </div>
+        {activeTab === 'scan_mode' && <ScanModeTab />}
+
+        {activeTab === 'ip_block' && <IpBlockTab agents={agents} />}
       </main>
 
       {/* Log Detail Modal */}
