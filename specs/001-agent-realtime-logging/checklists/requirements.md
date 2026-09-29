@@ -1,8 +1,8 @@
-# Specification Quality Checklist: Multi-Agent Realtime Scan Logging & Admin Auth
+# Specification Quality Checklist: Multi-Agent Realtime Scan Logging & Automated Scan Scheduler
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-09-29
-**Feature**: [spec.md](file:///d:/Th%E1%BA%A1c%20s%C4%A9/IT6027/server/specs/001-agent-realtime-logging/spec.md)
+**Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
@@ -31,4 +31,4 @@
 
 ## Notes
 
-- Specification validated successfully against all quality criteria. Ready for planning phase (`/speckit-plan`).
+- Specification validated successfully and ready for planning.

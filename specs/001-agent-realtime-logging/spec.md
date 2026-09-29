@@ -1,4 +1,4 @@
-# Feature Specification: Multi-Agent Realtime Scan Logging & Admin Auth
+# Feature Specification: Multi-Agent Realtime Scan Logging & Automated Scan Scheduler
 
 **Feature Branch**: `001-agent-realtime-logging`
 
@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "/speckit-specify hãy bắt đầu với chức năng đầu tiên lưu log các lần quét, hãy tổ chức như sau: sẽ không chỉ có 1 agent đẩy log lên mà sẽ có nhiều agent, và mỗi agent sẽ có những log riêng, hãy sử dụng giao thức web socket để thời gian giao tiếp giữa agent và server gần như là realtime, với những thông tin mà server sẽ nhận được từ agent sẽ theo như dữ liệu mẫu... Ngoài ra, hãy thêm tính năng đăng nhập web server dành riêng cho admin, và sẽ chỉ có duy nhất admin được toàn quyền truy cập toàn bộ tính năng của web server"
+**Input**: User description: "hãy tiếp tục với tính năng số 2 lập lịch quét: lập lịch quét tự động định kỳ, sử dụng các widget tương tác chọn ngày giờ, tần suất, phạm vi quét (folder/drive), target agents, và chế độ xử lý (DETECTED_ONLY, QUARANTINE, DELETE)"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -32,7 +32,7 @@ As the System Administrator, I want to authenticate into the Web Server dashboar
 
 **Why this priority**: Critical security requirement defined in the project constitution. Unauthorized access to malware management features presents a severe security risk.
 
-**Independent Test**: Can be tested independently by submitting correct and incorrect credentials at `/api/auth/login` and verifying access token generation, route protection, and rejection of unauthenticated API calls.
+**Independent Test**: Can be tested independently by submitting correct and incorrect credentials at `/api/v1/auth/login` and verifying access token generation, route protection, and rejection of unauthenticated API calls.
 
 **Acceptance Scenarios**:
 
@@ -73,12 +73,29 @@ As the Administrator, I want to monitor active Agent connection status (Online/O
 
 ---
 
+### User Story 5 - Automated Scan Scheduler & Interactive Visual Widgets (Priority: P2)
+
+As the Administrator, I want to configure automated periodic scan schedules using visual interactive widgets (Frequency: Hourly/Daily/Weekly/Monthly/Custom, Time/Date pickers, Scope presets, Target agents, Scan action mode), so that recurring malware scans are automatically dispatched to endpoints without requiring manual Cron text entry.
+
+**Why this priority**: Crucial for automated threat prevention. Periodic automated scans detect dormant malware on endpoint hosts automatically.
+
+**Independent Test**: Can be tested independently by configuring a schedule via the interactive UI widgets, submitting to `/api/v1/schedules`, and verifying that the backend generates a valid Cron string, persists the record, and dispatches scan triggers to connected Agents at the scheduled time.
+
+**Acceptance Scenarios**:
+
+1. **Given** the Admin in the Scan Scheduler tab, **When** the Admin selects a frequency tile (e.g., `Weekly`), picks a day (`Monday`), execution time (`02:00 AM`), scan scope (`Program Files`), target agents (`ALL`), and mode (`DETECTED_ONLY`), **Then** the system renders a live human-readable summary banner (*"Runs Every Monday at 02:00 AM (Cron: 0 2 * * 1)"*) and generates the valid Cron expression.
+2. **Given** a saved scan schedule, **When** the scheduled execution time arrives, **Then** the server's background scheduler dispatches the scan task to targeted connected Agents via WebSocket.
+3. **Given** an Agent receiving a scheduled scan order, **When** the scan completes, **Then** the Agent streams resulting scan logs back to the server in real time labeled with `ScanType = Scheduled Scan`.
+
+---
+
 ### Edge Cases
 
 - **WebSocket Reconnection & Buffer**: What happens if an Agent loses internet connectivity mid-scan? The Agent MUST buffer unsent log payloads locally and flush buffered logs sequentially upon WebSocket reconnection without creating duplicate log records.
 - **Log Burst Throttling**: What happens if an infected Agent generates 5,000 detection logs in 10 seconds? The server WebSocket handler MUST ingest messages into an async processing queue to prevent event-loop blocking or database lockouts.
 - **Malformed Timezone / Offset Handling**: What happens if an Agent transmits timestamps with unusual timezone offsets (e.g., `+06:59`)? The server MUST parse ISO 8601 strings accurately, convert timestamps to UTC for storage, while preserving original local time representation for display.
 - **Single Admin Lockout Safeguard**: What happens if multiple login attempts fail consecutively? The server MUST enforce rate-limiting on login endpoints to prevent brute-force attacks against the single Admin account.
+- **Offline Agent Scheduled Task Dispatch**: What happens if a target Agent is offline when a periodic scan trigger fires? The server MUST queue the scan command and dispatch it immediately upon the Agent's next WebSocket connection handshake.
 
 ## Requirements *(mandatory)*
 
@@ -86,16 +103,7 @@ As the Administrator, I want to monitor active Agent connection status (Online/O
 
 - **FR-001**: Server MUST expose a dedicated WebSocket communication endpoint (`/ws/agent`) dedicated to receiving agent telemetry and streaming scan logs in real time.
 - **FR-002**: Server MUST authenticate connecting Agents during WebSocket handshake using a pre-shared Agent token or registered `AgentID`.
-- **FR-003**: Server MUST validate incoming JSON log payloads against the strict specification schema:
-  - `AgentID` (String/UUID, required)
-  - `Module` (String, required, e.g., `"AI"`, `"YARA"`, `"Hash"`)
-  - `Name` (String, required threat/rule identifier)
-  - `Path` (String, required file/folder path on agent host)
-  - `ScanType` (String, required, e.g., `"Realtime Protection"`, `"Manual Scan"`)
-  - `Severity` (String, required: `"Low"`, `"Medium"`, `"High"`, `"Critical"`)
-  - `Status` (String, required: `"DETECTED_ONLY"`, `"QUARANTINED"`, `"DELETED"`)
-  - `Time` (ISO 8601 Timestamp with timezone offset, required)
-  - `version` (String, required protocol version, e.g., `"1.0"`)
+- **FR-003**: Server MUST validate incoming JSON log payloads against the strict specification schema (`AgentID`, `Module`, `Name`, `Path`, `ScanType`, `Severity`, `Status`, `Time`, `version`).
 - **FR-004**: Server MUST persist validated scan log records into a relational database, linking each log immutably to the corresponding `AgentID`.
 - **FR-005**: Server MUST push incoming log events via WebSockets to authenticated Admin web dashboard sessions in real time (<500ms delay).
 - **FR-006**: System MUST enforce single Admin authentication (`Role = Admin`) for web dashboard access.
@@ -105,12 +113,20 @@ As the Administrator, I want to monitor active Agent connection status (Online/O
 - **FR-010**: Server MUST track and expose real-time Agent connection state (`Online` / `Offline`) and `LastSeen` timestamp.
 - **FR-011**: Server MUST quarantine malformed or unparseable WebSocket log payloads into an audit error log without closing the active WebSocket connection.
 - **FR-012**: Web UI MUST render high-volume log updates smoothly without UI lag, pagination freezes, or memory leaks.
+- **FR-013**: Server MUST provide REST endpoints to create, list, update, and toggle scan schedules (`/api/v1/schedules`).
+- **FR-014**: Web UI MUST provide interactive selection widgets for frequency (Hourly/Daily/Weekly/Monthly/Custom), time/date pickers, scope presets, target agent selection, and scan action mode.
+- **FR-015**: Web UI MUST render a live human-readable summary banner displaying the generated Cron string and execution explanation.
+- **FR-016**: Server MUST support targeting schedules to `ALL` connected endpoints or specific individual `AgentID`.
+- **FR-017**: Server MUST support configurable scan scope paths (`C:\Program Files`, `C:\Users`, `C:\Windows\Temp`, `C:\`, Custom path).
+- **FR-018**: Server MUST support scan action modes (`DETECTED_ONLY`, `QUARANTINE`, `DELETE`) associated with each schedule.
+- **FR-019**: Server background scheduler MUST trigger active schedules, dispatching scan commands to targeted connected Agents via WebSocket.
 
 ### Key Entities
 
 - **Agent**: Represents a managed client endpoint (`AgentID`, `Hostname`, `IPAddress`, `Status` [Online/Offline], `LastSeenTimestamp`, `AgentVersion`, `CreatedAt`).
 - **ScanLog**: Represents an individual file scan result received from an Agent (`LogID`, `AgentID`, `Module`, `ThreatName`, `FilePath`, `ScanType`, `Severity`, `Status`, `EventTimestamp`, `PayloadVersion`, `ReceivedAt`).
 - **AdminUser**: Represents the single administrative user account (`UserID`, `Username`, `PasswordHash`, `Role` = `"Admin"`, `LastLoginTimestamp`, `CreatedAt`).
+- **ScanSchedule**: Represents an automated periodic scan task configuration (`ScheduleID`, `Name`, `CronExpression`, `ScanScope`, `TargetAgents`, `ScanMode`, `IsActive`, `CreatedAt`).
 
 ## Success Criteria *(mandatory)*
 
@@ -121,6 +137,8 @@ As the Administrator, I want to monitor active Agent connection status (Online/O
 - **SC-003**: Admin authentication completes and renders the web dashboard in under 1.5 seconds.
 - **SC-004**: Admin can filter, sort, and search through 100,000 historical scan logs with query results returning in under 2 seconds.
 - **SC-005**: 100% of unauthenticated API or WebSocket connection attempts to protected resources are successfully blocked with HTTP 401/403 errors.
+- **SC-006**: Server dispatches scheduled scan tasks within 1 second of Cron trigger time to all connected target Agents.
+- **SC-007**: Web UI schedule creation and widget interactive state updates complete instantly (<100ms) with zero raw cron syntax errors.
 
 ## Assumptions
 
