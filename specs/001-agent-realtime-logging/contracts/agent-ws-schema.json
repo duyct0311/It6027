@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentScanLogPayload",
+  "type": "object",
+  "required": [
+    "AgentID",
+    "Module",
+    "Name",
+    "Path",
+    "ScanType",
+    "Severity",
+    "Status",
+    "Time",
+    "version"
+  ],
+  "properties": {
+    "AgentID": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique UUID identifier of the scanning agent"
+    },
+    "Module": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Engine or module responsible for detection (e.g. AI, YARA, Hash)"
+    },
+    "Name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Threat classification name or rule title"
+    },
+    "Path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full file or target directory path on client system"
+    },
+    "ScanType": {
+      "type": "string",
+      "enum": ["Realtime Protection", "Manual Scan", "Scheduled Scan"],
+      "description": "Trigger category of the scan"
+    },
+    "Severity": {
+      "type": "string",
+      "enum": ["Low", "Medium", "High", "Critical"],
+      "description": "Assigned severity level"
+    },
+    "Status": {
+      "type": "string",
+      "enum": ["DETECTED_ONLY", "QUARANTINED", "DELETED"],
+      "description": "Action status executed on target file"
+    },
+    "Time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 formatted timestamp with timezone offset"
+    },
+    "version": {
+      "type": "string",
+      "description": "Protocol schema version"
+    }
+  },
+  "additionalProperties": true
+}

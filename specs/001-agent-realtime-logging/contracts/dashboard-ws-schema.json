@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DashboardEventBroadcast",
+  "type": "object",
+  "required": ["event", "data", "timestamp"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": ["NEW_SCAN_LOG", "AGENT_STATUS_CHANGE", "SYSTEM_ALERT"],
+      "description": "Event classification broadcast to Admin dashboard"
+    },
+    "data": {
+      "type": "object",
+      "description": "Payload data corresponding to the event"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server UTC broadcast timestamp"
+    }
+  }
+}
