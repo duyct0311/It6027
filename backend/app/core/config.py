@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "malware-scan-secret-key-change-in-production-2026")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev_jwt_secret_key_change_in_production")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 8  # 8 hours
     

@@ -357,7 +357,7 @@
 * **Response 200 OK**:
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token": "<JWT_ACCESS_TOKEN_STRING>",
   "token_type": "bearer",
   "user": {
     "username": "admin",

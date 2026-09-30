@@ -21,7 +21,7 @@ async def test_db():
 
 @pytest.mark.asyncio
 async def test_admin_password_hashing():
-    raw_pwd = "SecretAdminPassword123!"
+    raw_pwd = "admin123"
     hashed_pwd = get_password_hash(raw_pwd)
     
     assert verify_password(raw_pwd, hashed_pwd) is True
