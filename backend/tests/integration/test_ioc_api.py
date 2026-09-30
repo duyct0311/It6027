@@ -61,4 +61,12 @@ async def test_create_and_fetch_manual_ioc(test_db):
         assert len(items) == 1
         assert items[0]["value"] == "192.168.1.250"
 
+        # 3. Test POST /api/v1/ioc/push
+        push_res = await client.post("/api/v1/ioc/push", headers=headers)
+        assert push_res.status_code == 200
+        push_data = push_res.json()
+        assert push_data["status"] == "success"
+        assert push_data["pushed_count"] >= 1
+
     app.dependency_overrides.clear()
+

@@ -128,3 +128,51 @@ async def trigger_feed_sync(
     })
 
     return result
+
+@router.post("/push", response_model=Dict[str, Any])
+async def push_iocs_to_agents(
+    db: AsyncSession = Depends(get_db),
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """
+    Pushes active IOC rules from server database down to all connected agent WebSockets.
+    """
+    stmt = select(IOC).where(IOC.is_active == True).order_by(IOC.created_at.desc())
+    res = await db.execute(stmt)
+    active_iocs = res.scalars().all()
+
+    ioc_payload = [
+        {
+            "id": i.id,
+            "value": i.value,
+            "category": i.category,
+            "source": i.source,
+            "description": i.description or ""
+        }
+        for i in active_iocs
+    ]
+
+    connected_count = len(broadcast_manager.agent_connections)
+
+    # Broadcast rules to all connected WebSocket Agents
+    await broadcast_manager.broadcast_to_agents("SYNC_IOC_RULES", {
+        "action": "SYNC_IOC_RULES",
+        "total_rules": len(ioc_payload),
+        "iocs": ioc_payload[:500], # Send active signatures sample / batch
+        "pushed_at": datetime.now(timezone.utc).isoformat()
+    })
+
+    # Broadcast notification to Dashboard
+    await broadcast_manager.broadcast_to_dashboard("UPDATE_IOC_PUSH_STATUS", {
+        "pushed_count": len(ioc_payload),
+        "connected_agents": connected_count,
+        "pushed_at": datetime.now(timezone.utc).isoformat()
+    })
+
+    return {
+        "status": "success",
+        "pushed_count": len(ioc_payload),
+        "connected_agents_count": connected_count,
+        "message": f"Successfully pushed {len(ioc_payload):,} IOC rules down to {connected_count} connected agent(s)."
+    }
+

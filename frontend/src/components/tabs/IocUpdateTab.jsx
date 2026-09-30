@@ -10,7 +10,9 @@ import {
   Search,
   CheckCircle2,
   Sliders,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  Radio
 } from 'lucide-react';
 import { apiClient } from '../../services/api';
 
@@ -18,6 +20,7 @@ export const IocUpdateTab = () => {
   const [iocs, setIocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -69,13 +72,32 @@ export const IocUpdateTab = () => {
     }
   };
 
+  const handlePushToAgents = async () => {
+    setPushing(true);
+    setMsg('');
+    try {
+      const res = await apiClient.post('/ioc/push');
+      const text = res.data?.message || 'Pushed IOC rules to agents successfully!';
+      setMsg(`⚡ ${text}`);
+    } catch (err) {
+      setMsg('Failed to push IOCs to agents: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setPushing(false);
+    }
+  };
+
   const handleManualSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setMsg('');
     try {
       await apiClient.post('/ioc', form);
-      setMsg('Custom Manual IOC payload created & deployed to agents successfully!');
+      // Auto-push newly created custom IOC to connected agents
+      try {
+        await apiClient.post('/ioc/push');
+      } catch (_) {}
+
+      setMsg('Custom Manual IOC payload created & deployed to all agents successfully!');
       fetchIocs();
       setForm({
         category: 'MaliciousIP',
@@ -118,20 +140,33 @@ export const IocUpdateTab = () => {
           <Database size={28} className="text-accent" />
           <div>
             <h2>Feature 3: Hybrid IOC & Threat Intelligence Engine</h2>
-            <p>Automate public Threat Intelligence feed imports (MalwareBazaar, ThreatFox, FeodoTracker, URLhaus) and add custom manual IOCs.</p>
+            <p>Automate public Threat Intelligence feed imports (MalwareBazaar, ThreatFox, FeodoTracker, URLhaus), add custom manual IOCs, and push signatures down to Agents.</p>
           </div>
         </div>
 
-        <button
-          onClick={handleSyncFeeds}
-          className="btn-primary flex items-center gap-2"
-          disabled={syncing}
-          style={{ width: 'auto' }}
-        >
-          <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-          <span>{syncing ? 'Syncing Public Feeds...' : 'Sync All Feeds Now'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSyncFeeds}
+            className="btn-secondary flex items-center gap-2 text-xs"
+            disabled={syncing}
+            style={{ width: 'auto' }}
+          >
+            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
+            <span>{syncing ? 'Syncing...' : 'Sync Feeds Now'}</span>
+          </button>
+
+          <button
+            onClick={handlePushToAgents}
+            className="btn-primary flex items-center gap-2 text-xs"
+            disabled={pushing}
+            style={{ width: 'auto' }}
+          >
+            <Zap size={14} className={pushing ? 'animate-pulse text-warning' : ''} />
+            <span>{pushing ? 'Pushing Rules...' : 'Push IOCs to Connected Agents'}</span>
+          </button>
+        </div>
       </div>
+
 
       {/* Public TI Feed Provider Status Grid */}
       <div className="stats-grid">

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.ioc import IOC, FeedProvider
+from app.models.ioc import IOC
 
 logger = logging.getLogger("ti_collector")
 
@@ -29,7 +29,7 @@ FREE_FEED_SOURCES = [
     },
     {
         "name": "URLhaus",
-        "url": "https://urlhaus.abuse.ch/downloads/csv/recent/",
+        "url": "https://urlhaus.abuse.ch/downloads/csv_recent/",
         "category": "URL",
         "type": "csv_urlhaus"
     }
@@ -42,12 +42,12 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
     """
     total_ingested = 0
     sync_results = {}
+    headers = {"User-Agent": "Malware-Scan-Server/1.0"}
 
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=headers) as client:
         for feed in FREE_FEED_SOURCES:
             name = feed["name"]
             url = feed["url"]
-            category = feed["category"]
             feed_type = feed["type"]
 
             try:
@@ -58,6 +58,17 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
                     continue
 
                 parsed_items = []
+                seen_keys = set()
+
+                def add_item(val: str, cat: str, desc: str):
+                    key = (val.strip(), cat)
+                    if val and key not in seen_keys:
+                        seen_keys.add(key)
+                        parsed_items.append({
+                            "value": val.strip(),
+                            "category": cat,
+                            "description": desc
+                        })
 
                 if feed_type == "json_feodo":
                     data = resp.json()
@@ -65,11 +76,11 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
                         for item in data[:200]:
                             ip = item.get("ip_address")
                             if ip:
-                                parsed_items.append({
-                                    "value": ip,
-                                    "category": "MaliciousIP",
-                                    "description": f"Feodo Botnet C2 ({item.get('malware', 'Botnet')})"
-                                })
+                                add_item(
+                                    ip,
+                                    "MaliciousIP",
+                                    f"Feodo Botnet C2 ({item.get('malware', 'Botnet')})"
+                                )
 
                 elif feed_type == "json_threatfox":
                     data = resp.json()
@@ -77,45 +88,51 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
                     for item_id, items in items_dict.items():
                         if isinstance(items, list):
                             for item in items[:200]:
-                                ioc_val = item.get("ioc")
-                                ioc_type = item.get("ioc_type", "")
-                                cat = "MaliciousIP" if "ip" in ioc_type.lower() else "FileHash"
+                                ioc_val = item.get("ioc_value") or item.get("ioc")
+                                ioc_type = (item.get("ioc_type") or "").lower()
+                                if "ip" in ioc_type or "domain" in ioc_type:
+                                    cat = "MaliciousIP"
+                                elif "url" in ioc_type:
+                                    cat = "URL"
+                                else:
+                                    cat = "FileHash"
+
                                 if ioc_val:
-                                    parsed_items.append({
-                                        "value": ioc_val,
-                                        "category": cat,
-                                        "description": f"ThreatFox C2 ({item.get('malware_printable', 'Malware')})"
-                                    })
+                                    add_item(
+                                        ioc_val,
+                                        cat,
+                                        f"ThreatFox ({item.get('malware_printable', 'Malware')})"
+                                    )
 
                 elif feed_type == "csv_bazaar":
                     lines = resp.text.splitlines()
                     for line in lines[:300]:
                         if line.startswith("#") or not line.strip():
                             continue
-                        parts = line.split(",")
+                        parts = [p.strip().strip('"') for p in line.split(",")]
                         if len(parts) >= 2:
-                            sha256_hash = parts[1].strip().replace('"', '')
+                            sha256_hash = parts[1]
                             if len(sha256_hash) == 64:
-                                parsed_items.append({
-                                    "value": sha256_hash,
-                                    "category": "FileHash",
-                                    "description": "MalwareBazaar Recent SHA256 Sample"
-                                })
+                                add_item(
+                                    sha256_hash,
+                                    "FileHash",
+                                    f"MalwareBazaar Sample ({parts[8] if len(parts) > 8 else 'Malware'})"
+                                )
 
                 elif feed_type == "csv_urlhaus":
                     lines = resp.text.splitlines()
                     for line in lines[:300]:
                         if line.startswith("#") or not line.strip():
                             continue
-                        parts = line.split(",")
+                        parts = [p.strip().strip('"') for p in line.split(",")]
                         if len(parts) >= 3:
-                            url_val = parts[2].strip().replace('"', '')
+                            url_val = parts[2]
                             if url_val.startswith("http"):
-                                parsed_items.append({
-                                    "value": url_val,
-                                    "category": "URL",
-                                    "description": "URLhaus Malicious Payload Distribution Link"
-                                })
+                                add_item(
+                                    url_val,
+                                    "URL",
+                                    f"URLhaus Malicious Link ({parts[5] if len(parts) > 5 else 'Payload'})"
+                                )
 
                 # Batch Deduplicate & Ingest
                 ingested_for_feed = 0
@@ -145,6 +162,7 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
                 sync_results[name] = {"status": "SUCCESS", "count": ingested_for_feed}
 
             except Exception as e:
+                await db.rollback()
                 logger.error(f"Error syncing feed {name}: {e}")
                 sync_results[name] = {"status": "ERROR", "error": str(e), "count": 0}
 
@@ -153,3 +171,5 @@ async def sync_all_public_feeds(db: AsyncSession) -> dict:
         "ingested_count": total_ingested,
         "feed_results": sync_results
     }
+
+

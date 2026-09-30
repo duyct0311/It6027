@@ -39,7 +39,7 @@ class BroadcastManager:
         }
         
         disconnected = []
-        for connection in self.dashboard_connections:
+        for connection in list(self.dashboard_connections):
             try:
                 await connection.send_json(payload)
             except Exception as e:
@@ -49,4 +49,27 @@ class BroadcastManager:
         for dead_conn in disconnected:
             self.disconnect_dashboard(dead_conn)
 
+    async def broadcast_to_agents(self, event_type: str, data: Dict[str, Any], target_agents: List[str] = None):
+        payload = {
+            "event": event_type,
+            "data": data,
+            "timestamp": data.get("timestamp") or data.get("Time")
+        }
+        
+        disconnected = []
+        for agent_id, connection in list(self.agent_connections.items()):
+            if target_agents and agent_id not in target_agents:
+                continue
+            try:
+                await connection.send_json(payload)
+                logger.info(f"Pushed {event_type} event to agent: {agent_id}")
+            except Exception as e:
+                logger.warning(f"Error pushing payload to agent [{agent_id}]: {e}")
+                disconnected.append(agent_id)
+                
+        for dead_agent in disconnected:
+            self.disconnect_agent(dead_agent)
+
 broadcast_manager = BroadcastManager()
+
+

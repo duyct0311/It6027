@@ -62,3 +62,20 @@ async def get_scan_logs(
         limit=limit,
         items=response_items
     )
+
+@router.delete("", response_model=dict)
+async def delete_all_logs(
+    db: AsyncSession = Depends(get_db),
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """
+    Delete all scan logs and quarantine logs from database.
+    Requires Admin authentication.
+    """
+    count = await log_service.clear_all_logs(db)
+    return {
+        "status": "success",
+        "deleted_count": count,
+        "message": f"Successfully deleted {count} scan log entries."
+    }
+

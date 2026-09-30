@@ -144,4 +144,19 @@ class LogService:
         items = result.scalars().all()
         return list(items), total
 
+    @staticmethod
+    async def clear_all_logs(db: AsyncSession) -> int:
+        """
+        Delete all scan logs and quarantine logs from database.
+        """
+        from sqlalchemy import delete
+        stmt_logs = delete(ScanLog)
+        stmt_quarantine = delete(LogQuarantine)
+        
+        res1 = await db.execute(stmt_logs)
+        res2 = await db.execute(stmt_quarantine)
+        await db.commit()
+        return res1.rowcount + res2.rowcount
+
 log_service = LogService()
+
