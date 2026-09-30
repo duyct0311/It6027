@@ -6,7 +6,7 @@
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing.
 
-## Format: `- [ ] [ID] [P?] [Story?] Description with file path`
+## Format: `- [x] [ID] [P?] [Story?] Description with file path`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4, US5, US6)
@@ -141,11 +141,11 @@
 
 ### Implementation for User Story 6
 
-- [ ] T041 [P] [US6] Define IOC and FeedProvider entity models in backend/app/models/ioc.py
-- [ ] T042 [P] [US6] Implement TI Feed Collector background service (httpx async fetcher for MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus) in backend/app/services/ti_collector.py
-- [ ] T043 [US6] Implement IOC REST endpoints (/api/v1/ioc, /api/v1/ioc/sync) in backend/app/api/v1/ioc.py
-- [ ] T044 [P] [US6] Update IOC Update Tab with Feed status cards, manual submission form, source filter, and sync trigger in frontend/src/components/tabs/IocUpdateTab.jsx
-- [ ] T045 [US6] Write integration test for IOC REST API & Feed Sync in backend/tests/integration/test_ioc_api.py
+- [x] T041 [P] [US6] Define IOC and FeedProvider entity models in backend/app/models/ioc.py
+- [x] T042 [P] [US6] Implement TI Feed Collector background service (httpx async fetcher for MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus) in backend/app/services/ti_collector.py
+- [x] T043 [US6] Implement IOC REST endpoints (/api/v1/ioc, /api/v1/ioc/sync) in backend/app/api/v1/ioc.py
+- [x] T044 [P] [US6] Update IOC Update Tab with Feed status cards, manual submission form, source filter, and sync trigger in frontend/src/components/tabs/IocUpdateTab.jsx
+- [x] T045 [US6] Write integration test for IOC REST API & Feed Sync in backend/tests/integration/test_ioc_api.py
 
 **Checkpoint**: User Story 6 provides hybrid automated & manual Threat Intelligence IOC sync.
 
@@ -157,8 +157,8 @@
 
 - [x] T037 Convert navigation to fixed 270px Left Sidebar layout with full English translation in frontend/src/pages/DashboardPage.jsx
 - [x] T038 Fix right-edge layout overflow and responsive grid clipping in frontend/src/assets/index.css
-- [ ] T046 Verify production build with Vite in frontend/ (npm run build)
-- [ ] T047 Run full backend test suite with Pytest in backend/ (python -m pytest)
+- [x] T046 Verify production build with Vite in frontend/ (npm run build)
+- [x] T047 Run full backend test suite with Pytest in backend/ (python -m pytest)
 
 ---
 
