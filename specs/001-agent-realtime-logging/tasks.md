@@ -1,4 +1,4 @@
-# Tasks: Multi-Agent Realtime Scan Logging & Automated Scan Scheduler
+# Tasks: Multi-Agent Realtime Scan Logging, Scan Scheduler & Hybrid IOC Engine
 
 **Input**: Design documents from `/specs/001-agent-realtime-logging/`
 
@@ -6,10 +6,10 @@
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing.
 
-## Format: `- [x] [ID] [P?] [Story?] Description with file path`
+## Format: `- [ ] [ID] [P?] [Story?] Description with file path`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4, US5)
+- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3, US4, US5, US6)
 - Includes exact file paths for every task
 
 ---
@@ -133,14 +133,32 @@
 
 ---
 
-## Phase 8: Polish & Cross-Cutting Concerns
+## Phase 8: User Story 6 - Hybrid IOC Engine: Free TI Feeds Sync & Manual Entry (Priority: P2)
+
+**Goal**: Implement automated background collector syncing free public TI feeds (MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus) and allow Admin custom manual IOC submission.
+
+**Independent Test**: Trigger POST `/api/v1/ioc/sync` to verify feed ingestion, submit manual IOC via POST `/api/v1/ioc`, and verify deduplication, database persistence, and WebSocket broadcast.
+
+### Implementation for User Story 6
+
+- [ ] T041 [P] [US6] Define IOC and FeedProvider entity models in backend/app/models/ioc.py
+- [ ] T042 [P] [US6] Implement TI Feed Collector background service (httpx async fetcher for MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus) in backend/app/services/ti_collector.py
+- [ ] T043 [US6] Implement IOC REST endpoints (/api/v1/ioc, /api/v1/ioc/sync) in backend/app/api/v1/ioc.py
+- [ ] T044 [P] [US6] Update IOC Update Tab with Feed status cards, manual submission form, source filter, and sync trigger in frontend/src/components/tabs/IocUpdateTab.jsx
+- [ ] T045 [US6] Write integration test for IOC REST API & Feed Sync in backend/tests/integration/test_ioc_api.py
+
+**Checkpoint**: User Story 6 provides hybrid automated & manual Threat Intelligence IOC sync.
+
+---
+
+## Phase 9: Polish & Cross-Cutting Concerns
 
 **Purpose**: Responsive UI fixes, English translations, and production build verification
 
 - [x] T037 Convert navigation to fixed 270px Left Sidebar layout with full English translation in frontend/src/pages/DashboardPage.jsx
 - [x] T038 Fix right-edge layout overflow and responsive grid clipping in frontend/src/assets/index.css
-- [x] T039 Verify production build with Vite in frontend/ (npm run build)
-- [x] T040 Run full backend test suite with Pytest in backend/ (python -m pytest)
+- [ ] T046 Verify production build with Vite in frontend/ (npm run build)
+- [ ] T047 Run full backend test suite with Pytest in backend/ (python -m pytest)
 
 ---
 
@@ -155,7 +173,8 @@
 - **User Story 3 (P2)**: Starts after US1 + US2 completion
 - **User Story 4 (P3)**: Starts after US1 completion
 - **User Story 5 (P2)**: Starts after US1 + US2 completion
-- **Polish (Phase 8)**: Depends on all user stories complete
+- **User Story 6 (P2)**: Starts after US1 + US2 completion
+- **Polish (Phase 9)**: Depends on all user stories complete
 
 ---
 
@@ -172,4 +191,5 @@
 2. Add User Story 3 (Log Filtering) → Granular Telemetry View
 3. Add User Story 4 (Agent Connection & Summary Stats) → Live Monitoring
 4. Add User Story 5 (Automated Scan Scheduler Widgets) → Recurring Threat Audit
-5. Final Polish & Build Verification
+5. Add User Story 6 (Hybrid TI Feeds & Manual IOC Sync) → Threat Intelligence Distribution
+6. Final Polish & Build Verification
