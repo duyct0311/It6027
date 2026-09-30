@@ -53,39 +53,59 @@
     "schedules": {
       "get_schedules": {
         "method": "GET",
-        "path": "/api/v1/schedules",
-        "response": [
-          {
-            "id": 1,
-            "name": "Periodic System Scan",
-            "cron_expression": "0 2 * * *",
-            "scan_scope": "C:\\Program Files",
-            "target_agents": "ALL",
-            "scan_mode": "DETECTED_ONLY",
-            "is_active": true,
-            "created_at": "2026-09-28T10:00:00Z"
-          }
-        ]
+        "path": "/api/v1/schedules"
       },
       "create_schedule": {
         "method": "POST",
-        "path": "/api/v1/schedules",
+        "path": "/api/v1/schedules"
+      }
+    },
+    "ioc_engine": {
+      "get_iocs": {
+        "method": "GET",
+        "path": "/api/v1/ioc",
+        "query_params": {
+          "category": "string (optional: FileHash | MaliciousIP | YARA | URL)",
+          "source": "string (optional: MalwareBazaar | ThreatFox | FeodoTracker | URLhaus | Manual Admin)",
+          "search": "string (optional)"
+        },
+        "response": [
+          {
+            "id": 1,
+            "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "category": "FileHash",
+            "source": "MalwareBazaar",
+            "description": "AgentTesla Ransomware SHA256",
+            "is_active": true,
+            "created_at": "2026-09-30T08:00:00Z"
+          }
+        ]
+      },
+      "create_manual_ioc": {
+        "method": "POST",
+        "path": "/api/v1/ioc",
         "request": {
-          "name": "Daily Malware Deep Audit",
-          "cron_expression": "0 2 * * *",
-          "scan_scope": "C:\\Program Files",
-          "target_agents": "ALL",
-          "scan_mode": "DETECTED_ONLY"
+          "value": "192.168.1.100",
+          "category": "MaliciousIP",
+          "description": "Custom Botnet C2 Server"
         },
         "response": {
           "id": 2,
-          "name": "Daily Malware Deep Audit",
-          "cron_expression": "0 2 * * *",
-          "scan_scope": "C:\\Program Files",
-          "target_agents": "ALL",
-          "scan_mode": "DETECTED_ONLY",
+          "value": "192.168.1.100",
+          "category": "MaliciousIP",
+          "source": "Manual Admin",
+          "description": "Custom Botnet C2 Server",
           "is_active": true,
-          "created_at": "2026-09-29T10:00:00Z"
+          "created_at": "2026-09-30T09:00:00Z"
+        }
+      },
+      "sync_feeds_now": {
+        "method": "POST",
+        "path": "/api/v1/ioc/sync",
+        "response": {
+          "status": "success",
+          "message": "TI Feed sync completed",
+          "ingested_count": 1420
         }
       }
     }

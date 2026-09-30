@@ -65,11 +65,41 @@ Represents an automated periodic scan schedule configured by the Admin.
 
 ---
 
+### IOC (`iocs` table)
+Represents a Threat Indicator of Compromise (Hash, IP, YARA rule, URL).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | Integer | Primary Key, Autoincrement | Internal IOC ID |
+| `value` | String(1024) | Not Null, Indexed | Indicator value (MD5/SHA256 hash, IP address, YARA content, URL) |
+| `category` | String(32) | Not Null, Indexed | Indicator category: `"FileHash"`, `"MaliciousIP"`, `"YARA"`, `"URL"` |
+| `source` | String(64) | Not Null, Indexed | Source feed: `"MalwareBazaar"`, `"ThreatFox"`, `"FeodoTracker"`, `"URLhaus"`, `"Manual Admin"` |
+| `description` | String(512) | Nullable | Threat context or rule description |
+| `is_active` | Boolean | Default: `True` | Active toggle flag |
+| `created_at` | DateTime | Default: UTC Now | Initial creation timestamp |
+| `last_synced_at` | DateTime | Default: UTC Now | Timestamp of last feed sync or verification |
+
+---
+
+### FeedProvider (`feed_providers` table)
+Represents a public Threat Intelligence feed source provider.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | Integer | Primary Key, Autoincrement | Provider ID |
+| `name` | String(64) | Unique, Not Null | Provider name (`"MalwareBazaar"`, `"ThreatFox"`, `"FeodoTracker"`, `"URLhaus"`) |
+| `feed_url` | String(512) | Not Null | External public feed HTTP URL |
+| `category` | String(32) | Not Null | Default indicator category |
+| `is_enabled` | Boolean | Default: `True` | Enabled toggle flag |
+| `last_sync_status` | String(32) | Default: `'SUCCESS'` | Status of last sync (`'SUCCESS'`, `'FAILED'`, `'IN_PROGRESS'`) |
+| `last_sync_at` | DateTime | Nullable | Timestamp of last sync execution |
+| `total_ingested` | Integer | Default: 0 | Total active indicators ingested |
+
+---
+
 ## 2. Validation & State Transition Rules
 
-1. **Log Severity Enum**: Must strictly be one of `['Low', 'Medium', 'High', 'Critical']`.
-2. **Log Action Status Enum**: Must strictly be one of `['DETECTED_ONLY', 'QUARANTINED', 'DELETED']`.
-3. **Agent Status State Machine**:
-   - `WebSocket Connect` -> set `status = 'ONLINE'`, update `last_seen`.
-   - `WebSocket Disconnect` -> set `status = 'OFFLINE'`, update `last_seen`.
-4. **Schedule Cron Expression**: Must validate against standard 5-part cron syntax before persistence.
+1. **IOC Category Enum**: Must strictly be one of `['FileHash', 'MaliciousIP', 'YARA', 'URL']`.
+2. **IOC Source Types**: Public feeds (`'MalwareBazaar'`, `'ThreatFox'`, `'FeodoTracker'`, `'URLhaus'`) or manual entries (`'Manual Admin'`).
+3. **Deduplication Rule**: Unique composite index on `(value, category)`. On sync, existing values update `last_synced_at`.
+4. **Agent Push Trigger**: On IOC insertion/update, server broadcasts `UPDATE_IOC` event over WebSocket to all active agents.
