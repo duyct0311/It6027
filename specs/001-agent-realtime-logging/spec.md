@@ -1,4 +1,4 @@
-# Feature Specification: Multi-Agent Realtime Scan Logging & Automated Scan Scheduler
+# Feature Specification: Multi-Agent Realtime Scan Logging, Automated Scan Scheduler & Hybrid IOC Engine
 
 **Feature Branch**: `001-agent-realtime-logging`
 
@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "hãy tiếp tục với tính năng số 2 lập lịch quét: lập lịch quét tự động định kỳ, sử dụng các widget tương tác chọn ngày giờ, tần suất, phạm vi quét (folder/drive), target agents, và chế độ xử lý (DETECTED_ONLY, QUARANTINE, DELETE)"
+**Input**: User description: "hãy tiếp tục với tính năng cập nhật IOC, ngoài việc tự động cập nhật vào db các nguồn dữ liệu từ các TI miễn phí (MalwareBazaar, ThreatFox, FeodoTracker, URLhaus), admin cũng có thể tự nhập nguồn IOC tìm được bên khác bằng tay"
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -89,6 +89,22 @@ As the Administrator, I want to configure automated periodic scan schedules usin
 
 ---
 
+### User Story 6 - Hybrid IOC Engine: Free TI Feeds Sync & Manual Entry (Priority: P2)
+
+As the Administrator, I want the system to automatically fetch and update Threat Intelligence (TI) IOCs from free public feeds (MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus) AND allow manual entry of custom IOCs (Hashes, IPs, YARA rules, URLs), so that all managed endpoints receive real-time, comprehensive threat signatures.
+
+**Why this priority**: Core requirement of Principle III & Capability 2 (IOC Update Engine). Equips scanning agents with zero-day hashes and C2 IP blocklists.
+
+**Independent Test**: Can be tested independently by triggering feed synchronization via POST `/api/v1/ioc/sync`, creating a manual custom IOC via POST `/api/v1/ioc`, and verifying deduplication, database persistence, and WebSocket broadcast to connected Agents.
+
+**Acceptance Scenarios**:
+
+1. **Given** an automated background collector or Admin triggering "Sync All Feeds Now", **When** the sync runs, **Then** the server fetches, parses, deduplicates, and stores public IOC records tagged with their source (`MalwareBazaar`, `ThreatFox`, `FeodoTracker`, `URLhaus`).
+2. **Given** an Admin on the IOC Management tab, **When** the Admin submits a custom manual IOC entry (`Value`, `Category`: FileHash/MaliciousIP/YARA/URL, `Description`), **Then** the system validates the payload, saves it tagged with `Source = Manual Admin`, and immediately broadcasts the IOC update down to connected Agents via WebSocket.
+3. **Given** duplicate IOC values ingested from public feeds or manual entry, **When** processed by the server, **Then** the deduplication layer updates the last-sync timestamp without creating redundant duplicate database records.
+
+---
+
 ### Edge Cases
 
 - **WebSocket Reconnection & Buffer**: What happens if an Agent loses internet connectivity mid-scan? The Agent MUST buffer unsent log payloads locally and flush buffered logs sequentially upon WebSocket reconnection without creating duplicate log records.
@@ -96,6 +112,7 @@ As the Administrator, I want to configure automated periodic scan schedules usin
 - **Malformed Timezone / Offset Handling**: What happens if an Agent transmits timestamps with unusual timezone offsets (e.g., `+06:59`)? The server MUST parse ISO 8601 strings accurately, convert timestamps to UTC for storage, while preserving original local time representation for display.
 - **Single Admin Lockout Safeguard**: What happens if multiple login attempts fail consecutively? The server MUST enforce rate-limiting on login endpoints to prevent brute-force attacks against the single Admin account.
 - **Offline Agent Scheduled Task Dispatch**: What happens if a target Agent is offline when a periodic scan trigger fires? The server MUST queue the scan command and dispatch it immediately upon the Agent's next WebSocket connection handshake.
+- **External TI Feed Downtime**: What happens if a public TI feed URL (e.g., MalwareBazaar or ThreatFox) experiences network downtime or returns HTTP errors? The server collector MUST log a sync warning, bypass the offline feed gracefully, and complete ingestion from remaining operational feeds without failing the overall sync process.
 
 ## Requirements *(mandatory)*
 
@@ -120,6 +137,13 @@ As the Administrator, I want to configure automated periodic scan schedules usin
 - **FR-017**: Server MUST support configurable scan scope paths (`C:\Program Files`, `C:\Users`, `C:\Windows\Temp`, `C:\`, Custom path).
 - **FR-018**: Server MUST support scan action modes (`DETECTED_ONLY`, `QUARANTINE`, `DELETE`) associated with each schedule.
 - **FR-019**: Server background scheduler MUST trigger active schedules, dispatching scan commands to targeted connected Agents via WebSocket.
+- **FR-020**: Server MUST provide REST endpoints to list, create, query, filter, and delete IOC records (`/api/v1/ioc`).
+- **FR-021**: Server MUST implement an automated background collector service that periodically syncs threat indicators from free public TI feeds (MalwareBazaar, ThreatFox, Feodo Tracker, URLhaus).
+- **FR-022**: Server MUST support manual creation of custom IOC entries by Admin (`Source = Manual Admin`), supporting categories: `FileHash`, `MaliciousIP`, `YARA`, `URL`.
+- **FR-023**: System MUST perform automated deduplication on ingested IOC values based on hash/pattern comparison before database insertion.
+- **FR-024**: Web UI MUST render IOC Feed Provider status cards, manual creation form, free-text search, category filters, and source filters (`All Sources`, `MalwareBazaar`, `ThreatFox`, `FeodoTracker`, `URLhaus`, `Manual Admin`).
+- **FR-025**: Server MUST provide a manual "Sync All Feeds Now" API trigger (`POST /api/v1/ioc/sync`) allowing Admin to trigger immediate feed synchronization.
+- **FR-026**: Server MUST broadcast newly added/updated IOC payloads to all connected Agents via WebSocket (`event = UPDATE_IOC`).
 
 ### Key Entities
 
@@ -127,6 +151,8 @@ As the Administrator, I want to configure automated periodic scan schedules usin
 - **ScanLog**: Represents an individual file scan result received from an Agent (`LogID`, `AgentID`, `Module`, `ThreatName`, `FilePath`, `ScanType`, `Severity`, `Status`, `EventTimestamp`, `PayloadVersion`, `ReceivedAt`).
 - **AdminUser**: Represents the single administrative user account (`UserID`, `Username`, `PasswordHash`, `Role` = `"Admin"`, `LastLoginTimestamp`, `CreatedAt`).
 - **ScanSchedule**: Represents an automated periodic scan task configuration (`ScheduleID`, `Name`, `CronExpression`, `ScanScope`, `TargetAgents`, `ScanMode`, `IsActive`, `CreatedAt`).
+- **IOC**: Represents a Threat Indicator of Compromise (`IOCID`, `Value`, `Category` [FileHash/MaliciousIP/YARA/URL], `Source` [MalwareBazaar/ThreatFox/FeodoTracker/URLhaus/Manual Admin], `Description`, `IsActive`, `CreatedAt`, `LastSyncedAt`).
+- **FeedProvider**: Represents a configured public Threat Intelligence feed source (`ProviderID`, `Name`, `FeedURL`, `Category`, `IsEnabled`, `LastSyncStatus`, `LastSyncTime`, `TotalIngestedCount`).
 
 ## Success Criteria *(mandatory)*
 
@@ -139,6 +165,8 @@ As the Administrator, I want to configure automated periodic scan schedules usin
 - **SC-005**: 100% of unauthenticated API or WebSocket connection attempts to protected resources are successfully blocked with HTTP 401/403 errors.
 - **SC-006**: Server dispatches scheduled scan tasks within 1 second of Cron trigger time to all connected target Agents.
 - **SC-007**: Web UI schedule creation and widget interactive state updates complete instantly (<100ms) with zero raw cron syntax errors.
+- **SC-008**: Automated TI feed collector ingests and deduplicates 10,000+ public IOC indicators in under 5 seconds without blocking server REST/WebSocket APIs.
+- **SC-009**: Manually entered Admin IOCs are saved and broadcasted to connected Agents via WebSocket in under 500 milliseconds.
 
 ## Assumptions
 
